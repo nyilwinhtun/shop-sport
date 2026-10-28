@@ -17,16 +17,24 @@
     <!-- Early PWA Capture & Instant Service Worker Registration -->
     <script>
         window.deferredPrompt = null;
+        window.isWaitingForPWAInstall = false;
+
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
             window.deferredPrompt = e;
-            console.log('PWA: Native beforeinstallprompt captured!');
-            if (typeof window.checkAndShowBanner === 'function') {
+            console.log('PWA: Native beforeinstallprompt captured successfully!');
+            
+            // If user previously clicked Install and was waiting, trigger prompt immediately!
+            if (window.isWaitingForPWAInstall && typeof window.executePWAInstall === 'function') {
+                window.executePWAInstall();
+            } else if (typeof window.checkAndShowBanner === 'function') {
                 window.checkAndShowBanner();
             }
         });
+
         window.addEventListener('appinstalled', () => {
             window.deferredPrompt = null;
+            window.isWaitingForPWAInstall = false;
             console.log('PWA: App installed!');
             if (typeof window.showToast === 'function') {
                 window.showToast("Sports Shop App အား Home Screen တွင် အောင်မြင်စွာ သွင်းယူပြီးပါပြီ!");
@@ -36,9 +44,13 @@
             }
         });
 
+        // Register Service Worker immediately with proper scope
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('./sw.js', { scope: './' })
-                .then(reg => console.log('PWA: ServiceWorker active:', reg.scope))
+                .then(reg => {
+                    console.log('PWA: ServiceWorker active, scope:', reg.scope);
+                    reg.update();
+                })
                 .catch(err => console.warn('PWA: ServiceWorker error:', err));
         }
     </script>
@@ -1760,7 +1772,7 @@
             }
         };
 
-        // PWA Direct Native Install System
+        // PWA Direct Native WebAPK Install System
         const autoBanner = document.getElementById('pwa-auto-banner');
         const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
 
@@ -1791,49 +1803,76 @@
             if (autoBanner) autoBanner.classList.remove('hidden');
         };
 
-        window.triggerPWAInstall = async function() {
+        function setInstallButtonsLoading(loading) {
+            const btnBanner = document.getElementById('lbl-btn-banner-install');
+            const btnHeader = document.querySelector('#btn-mobile-install-header span');
+            const btnSidebar = document.getElementById('lbl-sidebar-install');
+            const btnSett = document.getElementById('lbl-btn-sett-install');
+
+            const text = loading
+                ? (currentLang === 'mm' ? "စောင့်ပါ..." : "Connecting...")
+                : (currentLang === 'mm' ? "သွင်းမည်" : "Install");
+
+            if (btnBanner) btnBanner.textContent = text;
+            if (btnHeader) btnHeader.textContent = text;
+            if (btnSidebar) btnSidebar.textContent = text;
+            if (btnSett) btnSett.textContent = text;
+        }
+
+        window.executePWAInstall = async function() {
             const promptEvent = window.deferredPrompt;
-            if (promptEvent) {
-                try {
-                    promptEvent.prompt();
-                    const choice = await promptEvent.userChoice;
-                    console.log('User response:', choice);
-                    if (choice && choice.outcome === 'accepted') {
-                        showToast(currentLang === 'mm' ? "ဖုန်းထဲသို့ Application အဖြစ် တိုက်ရိုက် သွင်းယူနေပါသည်..." : "Installing app directly to device...");
-                        window.deferredPrompt = null;
-                        if (autoBanner) autoBanner.classList.add('hidden');
-                    } else {
-                        showToast(currentLang === 'mm' ? "Install တင်ခြင်းကို ပယ်ဖျက်လိုက်ပါသည်။" : "Installation was cancelled.");
-                    }
-                } catch (err) {
-                    console.error("Install prompt error:", err);
+            if (!promptEvent) return false;
+
+            window.isWaitingForPWAInstall = false;
+            setInstallButtonsLoading(false);
+
+            try {
+                await promptEvent.prompt();
+                const choice = await promptEvent.userChoice;
+                console.log('User install choice:', choice);
+                if (choice && choice.outcome === 'accepted') {
+                    showToast(currentLang === 'mm' ? "ဖုန်းထဲသို့ Application အဖြစ် တိုက်ရိုက် သွင်းယူနေပါသည်..." : "Installing directly to device...");
+                    window.deferredPrompt = null;
+                    if (autoBanner) autoBanner.classList.add('hidden');
+                } else {
+                    showToast(currentLang === 'mm' ? "Install တင်ခြင်းကို ပယ်ဖျက်လိုက်ပါသည်။" : "Installation was cancelled.");
                 }
+                return true;
+            } catch (err) {
+                console.error("Install prompt error:", err);
+                return false;
+            }
+        };
+
+        window.triggerPWAInstall = async function() {
+            // 1. If deferredPrompt was already captured by Chrome, execute native dialog immediately!
+            if (window.deferredPrompt) {
+                await window.executePWAInstall();
                 return;
             }
 
-            // If prompt is not yet ready, wait briefly for it and trigger directly
-            showToast(currentLang === 'mm' ? "Install Dialog အား ခေါ်ယူနေပါသည်... စက္ကန့်အနည်းငယ် စောင့်ပါ" : "Preparing install prompt, please wait...");
-            
+            // 2. If already running as installed standalone app
+            if (isStandalone) {
+                showToast(currentLang === 'mm' ? "App အား ထည့်သွင်းထားပြီး ဖြစ်ပါသည်ခင်ဗျာ။" : "App is already installed.");
+                return;
+            }
+
+            // 3. If Chrome is still evaluating PWA criteria / Service Worker in background
+            window.isWaitingForPWAInstall = true;
+            setInstallButtonsLoading(true);
+            showToast(currentLang === 'mm' ? "Chrome နှင့် ချိတ်ဆက်နေပါသည်... စက္ကန့်အနည်းငယ် စောင့်ပါ" : "Connecting to Chrome, please wait a few seconds...");
+
             let attempts = 0;
             const checkInterval = setInterval(async () => {
                 attempts++;
-                const p = window.deferredPrompt;
-                if (p) {
+                if (window.deferredPrompt) {
                     clearInterval(checkInterval);
-                    try {
-                        p.prompt();
-                        const choice = await p.userChoice;
-                        if (choice && choice.outcome === 'accepted') {
-                            showToast(currentLang === 'mm' ? "ဖုန်းထဲသို့ Application အဖြစ် တိုက်ရိုက် သွင်းယူနေပါသည်..." : "Installing app directly to device...");
-                            window.deferredPrompt = null;
-                            if (autoBanner) autoBanner.classList.add('hidden');
-                        }
-                    } catch (e) {
-                        console.error(e);
-                    }
-                } else if (attempts >= 6) {
+                    await window.executePWAInstall();
+                } else if (attempts >= 25) { // 10 seconds timeout
                     clearInterval(checkInterval);
-                    showToast(currentLang === 'mm' ? "Browser ကို Refresh ပြုလုပ်ပြီး Install ခလုတ်ကို ချက်ချင်း နှိပ်ပေးပါခင်ဗျာ။" : "Please refresh the page and tap Install.");
+                    window.isWaitingForPWAInstall = false;
+                    setInstallButtonsLoading(false);
+                    showToast(currentLang === 'mm' ? "Google Chrome ဖြင့် ဖွင့်ထားခြင်း ဟုတ်/မဟုတ် စစ်ဆေးပြီး ခေတ္တအကြာတွင် ထပ်မံနှိပ်ပေးပါခင်ဗျာ။" : "Please ensure you are using Google Chrome and try again shortly.");
                 }
             }, 400);
         };
@@ -1935,14 +1974,7 @@
             return `🤖 <b>ဆိုင်၏ အချက်အလက်များ မေးမြန်းနိုင်ပါသည်:</b>\n၁။ "ယနေ့ အရောင်းအခြေအနေ"\n၂။ "လက်ကျန်နည်းနေတဲ့ ပစ္စည်းများ"\n၃။ "စုစုပေါင်း အမြတ်ငွေ"\nစသည်ဖြင့် အလွယ်တကူ ရိုက်နှိပ် မေးမြန်းနိုင်ပါသည် ခင်ဗျာ။`;
         }
 
-        // Service Worker Registration
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js')
-                    .then(reg => console.log('ServiceWorker registered:', reg.scope))
-                    .catch(err => console.log('ServiceWorker failed:', err));
-            });
-        }
+
     </script>
 </body>
 </html>
