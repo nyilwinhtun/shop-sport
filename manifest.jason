@@ -1,0 +1,16 @@
+{
+  "name": "Sports Shop POS & Inventory",
+  "short_name": "SportsPOS",
+  "description": "Offline capable point of sale and inventory management system.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f3f4f6",
+  "theme_color": "#3b82f6",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/1165/1165159.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
