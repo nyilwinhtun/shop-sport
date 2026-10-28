@@ -14,44 +14,38 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
-    <!-- Early PWA Capture & Instant Service Worker Registration -->
+    <!-- Instant PWA Capture & Service Worker Activation -->
     <script>
         window.deferredPrompt = null;
-        window.isWaitingForPWAInstall = false;
 
+        // Immediate event capture
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
             window.deferredPrompt = e;
-            console.log('PWA: Native beforeinstallprompt captured successfully!');
-            
-            // If user previously clicked Install and was waiting, trigger prompt immediately!
-            if (window.isWaitingForPWAInstall && typeof window.executePWAInstall === 'function') {
-                window.executePWAInstall();
-            } else if (typeof window.checkAndShowBanner === 'function') {
-                window.checkAndShowBanner();
+            console.log('PWA: Native beforeinstallprompt ready!');
+            if (typeof window.onPWAPromptReady === 'function') {
+                window.onPWAPromptReady();
             }
         });
 
         window.addEventListener('appinstalled', () => {
             window.deferredPrompt = null;
-            window.isWaitingForPWAInstall = false;
-            console.log('PWA: App installed!');
+            console.log('PWA: Application installed successfully!');
+            const autoBanner = document.getElementById('pwa-auto-banner');
+            if (autoBanner) autoBanner.classList.add('hidden');
             if (typeof window.showToast === 'function') {
-                window.showToast("Sports Shop App အား Home Screen တွင် အောင်မြင်စွာ သွင်းယူပြီးပါပြီ!");
-            }
-            if (typeof window.checkAndShowBanner === 'function') {
-                window.checkAndShowBanner();
+                window.showToast("Sports Shop App အား အောင်မြင်စွာ Install သွင်းပြီးပါပြီ!");
             }
         });
 
-        // Register Service Worker immediately with proper scope
+        // Immediate Service Worker registration with version query to bust cache
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('./sw.js', { scope: './' })
+            navigator.serviceWorker.register('./sw.js?v=9', { scope: './' })
                 .then(reg => {
-                    console.log('PWA: ServiceWorker active, scope:', reg.scope);
+                    console.log('PWA ServiceWorker ready:', reg.scope);
                     reg.update();
                 })
-                .catch(err => console.warn('PWA: ServiceWorker error:', err));
+                .catch(err => console.warn('SW error:', err));
         }
     </script>
 
@@ -1772,107 +1766,77 @@
             }
         };
 
-        // PWA Direct Native WebAPK Install System
+        // PWA Instant 1-Tap Direct Install System
         const autoBanner = document.getElementById('pwa-auto-banner');
         const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+
+        window.onPWAPromptReady = function() {
+            if (isStandalone) return;
+            if (sessionStorage.getItem('pwa_banner_dismissed')) return;
+            if (autoBanner) autoBanner.classList.remove('hidden');
+        };
 
         window.checkAndShowBanner = function() {
             if (isStandalone) {
                 if (autoBanner) autoBanner.classList.add('hidden');
-                const btnHeader = document.getElementById('btn-mobile-install-header');
-                const btnSidebar = document.getElementById('btn-desktop-install-sidebar');
-                const settCard = document.getElementById('settings-install-card');
-                if (btnHeader) btnHeader.classList.add('hidden');
-                if (btnSidebar) btnSidebar.classList.add('hidden');
-                if (settCard) settCard.classList.add('hidden');
                 return;
             }
-
-            const btnHeader = document.getElementById('btn-mobile-install-header');
-            const btnSidebar = document.getElementById('btn-desktop-install-sidebar');
-            const settCard = document.getElementById('settings-install-card');
-            if (btnHeader) btnHeader.classList.remove('hidden');
-            if (btnSidebar) btnSidebar.classList.remove('hidden');
-            if (settCard) settCard.classList.remove('hidden');
-
-            if (sessionStorage.getItem('pwa_banner_dismissed')) {
-                if (autoBanner) autoBanner.classList.add('hidden');
-                return;
-            }
-
-            if (autoBanner) autoBanner.classList.remove('hidden');
-        };
-
-        function setInstallButtonsLoading(loading) {
-            const btnBanner = document.getElementById('lbl-btn-banner-install');
-            const btnHeader = document.querySelector('#btn-mobile-install-header span');
-            const btnSidebar = document.getElementById('lbl-sidebar-install');
-            const btnSett = document.getElementById('lbl-btn-sett-install');
-
-            const text = loading
-                ? (currentLang === 'mm' ? "စောင့်ပါ..." : "Connecting...")
-                : (currentLang === 'mm' ? "သွင်းမည်" : "Install");
-
-            if (btnBanner) btnBanner.textContent = text;
-            if (btnHeader) btnHeader.textContent = text;
-            if (btnSidebar) btnSidebar.textContent = text;
-            if (btnSett) btnSett.textContent = text;
-        }
-
-        window.executePWAInstall = async function() {
-            const promptEvent = window.deferredPrompt;
-            if (!promptEvent) return false;
-
-            window.isWaitingForPWAInstall = false;
-            setInstallButtonsLoading(false);
-
-            try {
-                await promptEvent.prompt();
-                const choice = await promptEvent.userChoice;
-                console.log('User install choice:', choice);
-                if (choice && choice.outcome === 'accepted') {
-                    showToast(currentLang === 'mm' ? "ဖုန်းထဲသို့ Application အဖြစ် တိုက်ရိုက် သွင်းယူနေပါသည်..." : "Installing directly to device...");
-                    window.deferredPrompt = null;
-                    if (autoBanner) autoBanner.classList.add('hidden');
-                } else {
-                    showToast(currentLang === 'mm' ? "Install တင်ခြင်းကို ပယ်ဖျက်လိုက်ပါသည်။" : "Installation was cancelled.");
-                }
-                return true;
-            } catch (err) {
-                console.error("Install prompt error:", err);
-                return false;
+            // If native prompt is ready, show banner immediately
+            if (window.deferredPrompt && !sessionStorage.getItem('pwa_banner_dismissed')) {
+                if (autoBanner) autoBanner.classList.remove('hidden');
             }
         };
 
         window.triggerPWAInstall = async function() {
-            // 1. If deferredPrompt was already captured by Chrome, execute native dialog immediately!
-            if (window.deferredPrompt) {
-                await window.executePWAInstall();
-                return;
-            }
-
-            // 2. If already running as installed standalone app
+            // 1. If already running as installed standalone app
             if (isStandalone) {
-                showToast(currentLang === 'mm' ? "App အား ထည့်သွင်းထားပြီး ဖြစ်ပါသည်ခင်ဗျာ။" : "App is already installed.");
+                showToast(currentLang === 'mm' ? "ဤ App အား Home Screen တွင် ထည့်သွင်းပြီး ဖြစ်ပါသည်ခင်ဗျာ။" : "App is already installed on your device.");
                 return;
             }
 
-            // 3. If Chrome is still evaluating PWA criteria / Service Worker in background
-            window.isWaitingForPWAInstall = true;
-            setInstallButtonsLoading(true);
-            showToast(currentLang === 'mm' ? "Chrome နှင့် ချိတ်ဆက်နေပါသည်... စက္ကန့်အနည်းငယ် စောင့်ပါ" : "Connecting to Chrome, please wait a few seconds...");
+            // 2. Direct 1-tap instant native install prompt!
+            if (window.deferredPrompt) {
+                const promptEvent = window.deferredPrompt;
+                window.deferredPrompt = null;
+                try {
+                    await promptEvent.prompt();
+                    const choice = await promptEvent.userChoice;
+                    console.log('PWA User choice:', choice);
+                    if (choice && choice.outcome === 'accepted') {
+                        showToast(currentLang === 'mm' ? "ဖုန်းထဲသို့ Application အဖြစ် တိုက်ရိုက် သွင်းယူနေပါသည်..." : "Installing directly to your home screen...");
+                        if (autoBanner) autoBanner.classList.add('hidden');
+                    } else {
+                        showToast(currentLang === 'mm' ? "Install တင်ခြင်းကို ပယ်ဖျက်လိုက်ပါသည်။" : "Installation cancelled.");
+                    }
+                } catch (err) {
+                    console.error("Install prompt error:", err);
+                }
+                return;
+            }
 
+            // 3. If Chrome is still connecting, trigger native prompt as soon as ready
+            showToast(currentLang === 'mm' ? "ဖုန်းထဲသို့ တိုက်ရိုက် Auto Install သွင်းယူနေပါသည်... စက္ကန့်အနည်းငယ် စောင့်ပါခင်ဗျာ" : "Connecting direct install, please wait...");
+            
             let attempts = 0;
             const checkInterval = setInterval(async () => {
                 attempts++;
                 if (window.deferredPrompt) {
                     clearInterval(checkInterval);
-                    await window.executePWAInstall();
-                } else if (attempts >= 25) { // 10 seconds timeout
+                    const promptEvent = window.deferredPrompt;
+                    window.deferredPrompt = null;
+                    try {
+                        await promptEvent.prompt();
+                        const choice = await promptEvent.userChoice;
+                        if (choice && choice.outcome === 'accepted') {
+                            showToast(currentLang === 'mm' ? "ဖုန်းထဲသို့ Application အဖြစ် တိုက်ရိုက် သွင်းယူနေပါသည်..." : "Installing directly to your home screen...");
+                            if (autoBanner) autoBanner.classList.add('hidden');
+                        }
+                    } catch (e) {
+                        console.error(e);
+                    }
+                } else if (attempts >= 15) { // 6 seconds
                     clearInterval(checkInterval);
-                    window.isWaitingForPWAInstall = false;
-                    setInstallButtonsLoading(false);
-                    showToast(currentLang === 'mm' ? "Google Chrome ဖြင့် ဖွင့်ထားခြင်း ဟုတ်/မဟုတ် စစ်ဆေးပြီး ခေတ္တအကြာတွင် ထပ်မံနှိပ်ပေးပါခင်ဗျာ။" : "Please ensure you are using Google Chrome and try again shortly.");
+                    showToast(currentLang === 'mm' ? "ဖုန်းထဲသို့ Auto Install သွင်းနိုင်ရန် GitHub တွင် sw.js နှင့် manifest.json ကို အစားထိုးပေးရန် လိုအပ်ပါသည်ခင်ဗျာ။" : "Please ensure sw.js and manifest.json are updated on GitHub.");
                 }
             }, 400);
         };
@@ -1882,14 +1846,6 @@
             sessionStorage.setItem('pwa_banner_dismissed', 'true');
         };
 
-        window.addEventListener('appinstalled', () => {
-            window.deferredPrompt = null;
-            if (autoBanner) autoBanner.classList.add('hidden');
-            showToast(currentLang === 'mm' ? "Sports Shop App အား Install တင်ပြီးပါပြီ!" : "Sports Shop App Installed!");
-            checkAndShowBanner();
-        });
-
-        // Trigger banner check right away when page loads
         window.addEventListener('DOMContentLoaded', checkAndShowBanner);
 
         // AI Assistant Logic
