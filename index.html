@@ -1572,15 +1572,18 @@
             }
         };
 
-        // PWA Native Auto Install System
+        // PWA Install System: show the in-app Install button only when the browser
+        // has actually supplied a native install prompt. iOS uses its Share menu.
         let deferredPrompt = null;
         const autoBanner = document.getElementById('pwa-auto-banner');
         const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+        const isIOSDevice = /iphone|ipad|ipod/i.test(navigator.userAgent) ||
+            (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 
         function checkAndShowBanner() {
-            if (currentUser && !isStandalone && !sessionStorage.getItem('pwa_banner_dismissed')) {
-                if (autoBanner) autoBanner.classList.remove('hidden');
-            }
+            const shouldShow = Boolean(currentUser) && !isStandalone && Boolean(deferredPrompt) &&
+                !sessionStorage.getItem('pwa_banner_dismissed');
+            if (autoBanner) autoBanner.classList.toggle('hidden', !shouldShow);
         }
 
         window.addEventListener('beforeinstallprompt', (e) => {
@@ -1590,18 +1593,32 @@
         });
 
         window.triggerPWAInstall = async function() {
-            if (deferredPrompt) {
-                deferredPrompt.prompt();
-                const { outcome } = await deferredPrompt.userChoice;
+            if (!deferredPrompt) {
+                const message = isIOSDevice
+                    ? "iPhone/iPad: Open Share, then choose 'Add to Home Screen'."
+                    : "Install prompt unavailable. In Chrome, open menu (⋮) > Install app / Add to Home screen. Use the HTTPS website, not a local file.";
+                showToast(message);
+                return;
+            }
+
+            const installEvent = deferredPrompt;
+            deferredPrompt = null;
+            checkAndShowBanner();
+            try {
+                installEvent.prompt();
+                const { outcome } = await installEvent.userChoice;
                 if (outcome === 'accepted') {
                     showToast(currentLang === 'en' ? "Installing to Home Screen..." : "ဖုန်းထဲသို့ ထည့်သွင်းနေပါသည်...");
-                    if (autoBanner) autoBanner.classList.add('hidden');
+                } else {
+                    showToast(currentLang === 'en' ? "Installation was cancelled." : "Install တင်ခြင်းကို ပယ်ဖျက်လိုက်ပါသည်။");
                 }
-                deferredPrompt = null;
-            } else {
-                showToast(currentLang === 'en' 
-                    ? "Install ready: Use browser menu (⋮) -> 'Install App' or wait 10s." 
-                    : "စနစ်အဆင်သင့်ဖြစ်ပါသည်: Browser Menu (⋮) မှ Install App ကို နှိပ်ပါ");
+            } catch (error) {
+                console.error('PWA install prompt failed:', error);
+                showToast(currentLang === 'en'
+                    ? "Could not open the install prompt. Use the browser menu to install."
+                    : "Install prompt မပွင့်ပါ။ Browser menu မှ Install App ကို ရွေးပါ။");
+            } finally {
+                if (autoBanner) autoBanner.classList.add('hidden');
             }
         };
 
@@ -1611,6 +1628,7 @@
         };
 
         window.addEventListener('appinstalled', () => {
+            deferredPrompt = null;
             if (autoBanner) autoBanner.classList.add('hidden');
             showToast("Sports Shop App Installed!");
         });
