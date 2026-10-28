@@ -1,0 +1,1255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sports Shop POS & Inventory</title>
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#3b82f6">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        :root {
+            --bg-color: #f3f4f6;
+            --text-color: #1f2937;
+            --panel-bg: #ffffff;
+            --primary: #3b82f6;
+            --primary-hover: #2563eb;
+            --border-color: #e5e7eb;
+        }
+
+        body.theme-dark {
+            --bg-color: #111827;
+            --text-color: #f9fafb;
+            --panel-bg: #1f2937;
+            --primary: #60a5fa;
+            --primary-hover: #3b82f6;
+            --border-color: #374151;
+        }
+
+        body.theme-blue {
+            --bg-color: #0f172a;
+            --text-color: #e0f2fe;
+            --panel-bg: #1e293b;
+            --primary: #38bdf8;
+            --primary-hover: #0ea5e9;
+            --border-color: #334155;
+        }
+
+        body.theme-orange {
+            --bg-color: #fff7ed;
+            --text-color: #7c2d12;
+            --panel-bg: #ffedd5;
+            --primary: #f97316;
+            --primary-hover: #ea580c;
+            --border-color: #fed7aa;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            transition: all 0.3s ease;
+        }
+
+        .panel {
+            background-color: var(--panel-bg);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: #fff;
+            transition: background-color 0.2s;
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .text-primary { color: var(--primary); }
+        .border-primary { border-color: var(--primary); }
+        .input-field {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+        }
+        .input-field:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 1px var(--primary);
+        }
+
+        @media print {
+            body * { visibility: hidden; }
+            #receipt-modal, #receipt-modal * { visibility: visible; }
+            #receipt-modal {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                background: white !important;
+                color: black !important;
+            }
+            .no-print { display: none !important; }
+        }
+
+        #toast {
+            visibility: hidden;
+            min-width: 250px;
+            background-color: #333;
+            color: #fff;
+            text-align: center;
+            border-radius: 8px;
+            padding: 16px;
+            position: fixed;
+            z-index: 1000;
+            left: 50%;
+            bottom: 30px;
+            transform: translateX(-50%);
+            opacity: 0;
+            transition: opacity 0.3s, visibility 0.3s;
+        }
+        #toast.show {
+            visibility: visible;
+            opacity: 1;
+        }
+    </style>
+</head>
+<body class="h-screen w-screen overflow-hidden flex flex-col theme-light">
+
+    <!-- Toast Notification -->
+    <div id="toast">Message goes here</div>
+
+    <!-- Login View -->
+    <div id="login-view" class="flex-1 flex items-center justify-center panel z-50 absolute inset-0">
+        <div class="panel p-8 rounded-2xl shadow-xl w-full max-w-md">
+            <div class="text-center mb-8">
+                <i class="fas fa-running text-4xl text-primary mb-2"></i>
+                <h1 class="text-2xl font-bold">Sports Shop POS</h1>
+                <p class="text-sm opacity-70">Login to your account</p>
+            </div>
+            
+            <form id="login-form" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium mb-1">Email</label>
+                    <input type="email" id="email" required class="input-field w-full px-4 py-2 rounded-lg" placeholder="admin@shop.com">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Password</label>
+                    <input type="password" id="password" required class="input-field w-full px-4 py-2 rounded-lg" placeholder="••••••••">
+                </div>
+                <button type="submit" class="btn-primary w-full py-2 rounded-lg font-medium shadow-md mt-4">Login</button>
+                <div class="text-center mt-4">
+                    <p class="text-sm opacity-70">New here? <a href="#" id="show-register" class="text-primary font-medium hover:underline">Create Account</a></p>
+                </div>
+            </form>
+
+            <form id="register-form" class="space-y-4 hidden">
+                <div>
+                    <label class="block text-sm font-medium mb-1">Email</label>
+                    <input type="email" id="reg-email" required class="input-field w-full px-4 py-2 rounded-lg" placeholder="admin@shop.com">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Password</label>
+                    <input type="password" id="reg-password" required class="input-field w-full px-4 py-2 rounded-lg" placeholder="••••••••">
+                </div>
+                <button type="submit" class="btn-primary w-full py-2 rounded-lg font-medium shadow-md mt-4">Register</button>
+                <div class="text-center mt-4">
+                    <p class="text-sm opacity-70">Already have an account? <a href="#" id="show-login" class="text-primary font-medium hover:underline">Login</a></p>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Main App View -->
+    <div id="app-view" class="hidden flex-1 flex h-full w-full">
+        <!-- Sidebar Navigation -->
+        <aside class="w-20 md:w-64 panel flex flex-col h-full shadow-lg z-10 transition-all">
+            <div class="p-4 md:p-6 flex items-center justify-center md:justify-start gap-3 border-b border-[var(--border-color)]">
+                <i class="fas fa-shopping-cart text-2xl text-primary"></i>
+                <h1 id="sidebar-shop-name" class="font-bold text-xl hidden md:block truncate">Shop Name</h1>
+            </div>
+            
+            <nav class="flex-1 p-2 md:p-4 space-y-2 overflow-y-auto">
+                <button onclick="switchTab('pos')" class="nav-btn w-full flex items-center justify-center md:justify-start gap-3 p-3 rounded-lg hover:bg-[var(--border-color)] transition-colors active-tab bg-[var(--border-color)] text-primary" data-target="pos">
+                    <i class="fas fa-calculator w-6"></i>
+                    <span class="hidden md:block font-medium" id="nav-pos">POS</span>
+                </button>
+                <button onclick="switchTab('inventory')" class="nav-btn w-full flex items-center justify-center md:justify-start gap-3 p-3 rounded-lg hover:bg-[var(--border-color)] transition-colors" data-target="inventory">
+                    <i class="fas fa-box-open w-6"></i>
+                    <span class="hidden md:block font-medium" id="nav-inventory">Inventory</span>
+                </button>
+                <button onclick="switchTab('dashboard')" class="nav-btn w-full flex items-center justify-center md:justify-start gap-3 p-3 rounded-lg hover:bg-[var(--border-color)] transition-colors" data-target="dashboard">
+                    <i class="fas fa-chart-pie w-6"></i>
+                    <span class="hidden md:block font-medium" id="nav-dashboard">Dashboard</span>
+                </button>
+                <button onclick="switchTab('settings')" class="nav-btn w-full flex items-center justify-center md:justify-start gap-3 p-3 rounded-lg hover:bg-[var(--border-color)] transition-colors" data-target="settings">
+                    <i class="fas fa-cog w-6"></i>
+                    <span class="hidden md:block font-medium" id="nav-settings">Settings</span>
+                </button>
+            </nav>
+
+            <div class="p-4 border-t border-[var(--border-color)]">
+                <button onclick="toggleLanguage()" class="w-full flex items-center justify-center md:justify-start gap-3 p-3 rounded-lg hover:bg-[var(--border-color)] transition-colors mb-2">
+                    <i class="fas fa-language w-6 text-primary"></i>
+                    <span class="hidden md:block font-medium" id="nav-lang">EN / မြန်မာ</span>
+                </button>
+                <button id="logout-btn" class="w-full flex items-center justify-center md:justify-start gap-3 p-3 rounded-lg text-red-500 hover:bg-red-500 hover:bg-opacity-10 transition-colors">
+                    <i class="fas fa-sign-out-alt w-6"></i>
+                    <span class="hidden md:block font-medium" id="nav-logout">Logout</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="flex-1 flex flex-col h-full overflow-hidden relative">
+            
+            <!-- POS Section (Default View) -->
+            <section id="pos-section" class="tab-content h-full flex flex-col md:flex-row overflow-hidden">
+                <!-- Products Grid -->
+                <div class="flex-1 p-4 flex flex-col overflow-hidden">
+                    <div class="flex gap-2 mb-4 overflow-x-auto pb-2" id="pos-category-filters">
+                        <button class="px-4 py-1 rounded-full btn-primary text-sm whitespace-nowrap">All</button>
+                    </div>
+                    <div class="flex-1 overflow-y-auto pr-2 pb-20 md:pb-0">
+                        <div class="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4" id="pos-product-grid"></div>
+                    </div>
+                </div>
+
+                <!-- Cart Panel -->
+                <div class="w-full md:w-80 lg:w-96 panel border-l border-[var(--border-color)] flex flex-col h-full z-10 absolute md:relative right-0 bottom-0 md:bottom-auto max-h-[50%] md:max-h-full transition-transform transform translate-y-full md:translate-y-0" id="cart-panel">
+                    <div class="w-full flex justify-center py-2 md:hidden cursor-pointer" onclick="toggleMobileCart()">
+                        <div class="w-12 h-1.5 bg-gray-300 rounded-full"></div>
+                    </div>
+                    
+                    <div class="p-4 border-b border-[var(--border-color)] flex justify-between items-center">
+                        <h2 class="text-xl font-bold" id="lbl-current-order">Current Order</h2>
+                        <span class="bg-primary text-white text-xs px-2 py-1 rounded-full" id="cart-count">0 items</span>
+                    </div>
+                    
+                    <div class="flex-1 overflow-y-auto p-4 space-y-3" id="cart-items">
+                        <div class="text-center opacity-50 py-10" id="lbl-cart-empty">Cart is empty</div>
+                    </div>
+
+                    <div class="p-4 border-t border-[var(--border-color)] bg-[var(--panel-bg)]">
+                        <div class="flex justify-between font-bold text-xl mb-4">
+                            <span id="lbl-total">Total</span>
+                            <span id="cart-total" class="text-primary">Ks 0</span>
+                        </div>
+                        <button onclick="checkout()" class="btn-primary w-full py-3 rounded-xl font-bold text-lg shadow-lg flex items-center justify-center gap-2">
+                            <i class="fas fa-check-circle"></i> <span id="lbl-checkout">Checkout</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Mobile Cart Toggle Button -->
+                <button onclick="toggleMobileCart()" class="md:hidden absolute bottom-4 right-4 btn-primary w-14 h-14 rounded-full shadow-2xl flex items-center justify-center text-xl z-0">
+                    <i class="fas fa-shopping-cart"></i>
+                </button>
+            </section>
+
+            <!-- Inventory Section -->
+            <section id="inventory-section" class="tab-content hidden h-full p-4 md:p-8 overflow-y-auto">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold" id="title-inventory">Inventory Management</h2>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Add Product Form -->
+                    <div class="lg:col-span-1 panel p-6 rounded-2xl shadow-sm h-fit">
+                        <h3 class="font-bold text-lg mb-4 border-b border-[var(--border-color)] pb-2" id="title-add-product">Add New Product</h3>
+                        <form id="add-product-form" class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium mb-1" id="lbl-prod-name">Product Name</label>
+                                <input type="text" id="prod-name" required class="input-field w-full px-3 py-2 rounded-lg">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-1" id="lbl-category">Category</label>
+                                <div class="flex gap-2">
+                                    <select id="prod-category" required class="input-field flex-1 px-3 py-2 rounded-lg">
+                                        <!-- Categories populated by JS -->
+                                    </select>
+                                    <button type="button" onclick="openAddCategoryModal()" class="btn-primary px-3 py-2 rounded-lg font-bold flex items-center gap-1 hover:opacity-90" title="Add New Category">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-3 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium mb-1" id="lbl-buy-price">Buy Price</label>
+                                    <input type="number" id="prod-buy-price" required min="0" class="input-field w-full px-3 py-2 rounded-lg" placeholder="0">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium mb-1" id="lbl-sell-price">Sell Price</label>
+                                    <input type="number" id="prod-price" required min="0" class="input-field w-full px-3 py-2 rounded-lg">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium mb-1" id="lbl-stock">Stock Qty</label>
+                                    <input type="number" id="prod-stock" required min="0" class="input-field w-full px-3 py-2 rounded-lg">
+                                </div>
+                            </div>
+                            <button type="submit" class="btn-primary w-full py-2 rounded-lg font-medium" id="btn-add-product">Add Product</button>
+                        </form>
+                    </div>
+
+                    <!-- Products List -->
+                    <div class="lg:col-span-2 panel rounded-2xl shadow-sm overflow-hidden">
+                        <div class="p-4 border-b border-[var(--border-color)] flex justify-between items-center bg-opacity-50">
+                            <h3 class="font-bold text-lg" id="title-prod-list">Product List</h3>
+                            <input type="text" id="search-inventory" placeholder="Search products..." class="input-field px-3 py-1 rounded-full text-sm">
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left">
+                                <thead class="bg-[var(--border-color)] bg-opacity-20">
+                                    <tr class="opacity-70 text-sm">
+                                        <th class="p-3" id="th-name">Name</th>
+                                        <th class="p-3" id="th-cat">Category</th>
+                                        <th class="p-3" id="th-buy">Buy Price</th>
+                                        <th class="p-3" id="th-sell">Sell Price</th>
+                                        <th class="p-3" id="th-stock">Stock</th>
+                                        <th class="p-3 text-right" id="th-actions">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="inventory-list" class="divide-y divide-[var(--border-color)]">
+                                    <!-- List populated by JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Dashboard Section -->
+            <section id="dashboard-section" class="tab-content hidden h-full p-4 md:p-8 overflow-y-auto">
+                <h2 class="text-2xl font-bold mb-6" id="title-dashboard">Dashboard Summary</h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                    <div class="panel p-6 rounded-2xl shadow-sm border-l-4 border-primary">
+                        <p class="text-sm opacity-70 mb-1" id="lbl-total-sales">Total Sales</p>
+                        <h3 class="text-3xl font-bold" id="dash-total-sales">Ks 0</h3>
+                    </div>
+                    <div class="panel p-6 rounded-2xl shadow-sm border-l-4 border-green-500">
+                        <p class="text-sm opacity-70 mb-1" id="lbl-total-profit">Net Profit</p>
+                        <h3 class="text-3xl font-bold text-green-500" id="dash-total-profit">Ks 0</h3>
+                    </div>
+                    <div class="panel p-6 rounded-2xl shadow-sm border-l-4 border-blue-500">
+                        <p class="text-sm opacity-70 mb-1" id="lbl-items-sold">Products Sold</p>
+                        <h3 class="text-3xl font-bold" id="dash-items-sold">0</h3>
+                    </div>
+                    <div class="panel p-6 rounded-2xl shadow-sm border-l-4 border-red-500">
+                        <p class="text-sm opacity-70 mb-1" id="lbl-low-stock">Low Stock Alerts</p>
+                        <h3 class="text-3xl font-bold text-red-500" id="dash-low-stock-count">0</h3>
+                    </div>
+                </div>
+
+                <!-- Data Analysis Charts -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                    <div class="panel p-6 rounded-2xl shadow-sm">
+                        <h3 class="font-bold mb-4" id="lbl-chart-sales">Sales Trend (Last 7 Days)</h3>
+                        <div class="relative h-64">
+                            <canvas id="salesBarChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="panel p-6 rounded-2xl shadow-sm">
+                        <h3 class="font-bold mb-4" id="lbl-chart-category">Sales by Category</h3>
+                        <div class="relative h-64">
+                            <canvas id="categoryPieChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel rounded-2xl shadow-sm overflow-hidden">
+                    <div class="p-4 border-b border-[var(--border-color)] bg-opacity-50">
+                        <h3 class="font-bold"><i class="fas fa-exclamation-triangle text-red-500 mr-2"></i> Low Stock Items (&lt; 5)</h3>
+                    </div>
+                    <div class="p-4 overflow-x-auto">
+                        <table class="w-full text-left">
+                            <thead>
+                                <tr class="opacity-70 text-sm border-b border-[var(--border-color)]">
+                                    <th class="pb-2">Product Name</th>
+                                    <th class="pb-2">Category</th>
+                                    <th class="pb-2 text-right">Current Stock</th>
+                                </tr>
+                            </thead>
+                            <tbody id="low-stock-list">
+                                <!-- Populated by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Settings Section -->
+            <section id="settings-section" class="tab-content hidden h-full p-4 md:p-8 overflow-y-auto">
+                <h2 class="text-2xl font-bold mb-6" id="title-settings">Application Settings</h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Shop Details -->
+                    <div class="panel p-6 rounded-2xl shadow-sm">
+                        <h3 class="font-bold text-lg mb-4 border-b border-[var(--border-color)] pb-2"><i class="fas fa-store mr-2"></i> Shop Details</h3>
+                        <form id="settings-form" class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium mb-1">Dynamic Shop Name</label>
+                                <input type="text" id="setting-shop-name" required class="input-field w-full px-4 py-2 rounded-lg text-lg font-medium" placeholder="Enter Shop Name">
+                                <p class="text-xs opacity-60 mt-1">This name will appear on receipts and navigation.</p>
+                            </div>
+                            <button type="submit" class="btn-primary px-6 py-2 rounded-lg font-medium mt-2 shadow-sm">Save Changes</button>
+                        </form>
+                    </div>
+
+                    <!-- Appearance -->
+                    <div class="panel p-6 rounded-2xl shadow-sm">
+                        <h3 class="font-bold text-lg mb-4 border-b border-[var(--border-color)] pb-2"><i class="fas fa-palette mr-2"></i> Color Theme</h3>
+                        <p class="text-sm opacity-70 mb-4">Choose a theme for the application.</p>
+                        
+                        <div class="grid grid-cols-2 gap-4">
+                            <button onclick="setTheme('light')" class="p-4 rounded-xl border-2 border-transparent bg-white text-gray-900 shadow-sm hover:border-gray-400 focus:border-blue-500 text-center font-medium">Light</button>
+                            <button onclick="setTheme('dark')" class="p-4 rounded-xl border-2 border-transparent bg-gray-900 text-white shadow-sm hover:border-gray-600 focus:border-blue-500 text-center font-medium">Dark</button>
+                            <button onclick="setTheme('blue')" class="p-4 rounded-xl border-2 border-transparent bg-slate-900 text-blue-200 shadow-sm hover:border-blue-700 focus:border-blue-500 text-center font-medium">Sporty Blue</button>
+                            <button onclick="setTheme('orange')" class="p-4 rounded-xl border-2 border-transparent bg-orange-50 text-orange-900 shadow-sm hover:border-orange-400 focus:border-orange-500 text-center font-medium">Energetic Orange</button>
+                        </div>
+                    </div>
+
+                    <!-- Bluetooth Thermal Printer -->
+                    <div class="panel p-6 rounded-2xl shadow-sm md:col-span-2">
+                        <h3 class="font-bold text-lg mb-2 border-b border-[var(--border-color)] pb-2 flex items-center gap-2">
+                            <i class="fas fa-print text-primary"></i> Bluetooth Thermal Printer
+                        </h3>
+                        <p class="text-sm opacity-70 mb-4" id="lbl-printer-desc">ချိတ်ဆက်ထားပါက အရောင်းပြီးဆုံးသည်နှင့် စက်မှ ဘောက်ချာ အလိုအလျောက် ထွက်လာပါမည်။ (Chrome Browser သာ အထောက်အပံ့ပြုပါသည်)</p>
+                        <div class="flex flex-wrap items-center gap-4">
+                            <button type="button" onclick="connectBluetoothPrinter()" class="btn-primary px-5 py-2.5 rounded-xl font-medium shadow-sm flex items-center gap-2 hover:opacity-90">
+                                <i class="fab fa-bluetooth-b"></i> <span id="lbl-connect-printer">Connect Printer (စက်ရှာရန်)</span>
+                            </button>
+                            <span id="printer-status" class="text-sm font-semibold text-green-600 bg-green-100 dark:bg-green-950 dark:text-green-300 px-3 py-1.5 rounded-lg hidden"></span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Quick Category Modal -->
+    <div id="category-modal" class="hidden fixed inset-0 z-[110] flex items-center justify-center bg-black bg-opacity-50">
+        <div class="panel p-6 rounded-2xl shadow-2xl w-full max-w-sm">
+            <h3 class="font-bold text-lg mb-4 border-b border-[var(--border-color)] pb-2" id="lbl-add-quick-cat">Add New Category</h3>
+            <form id="inline-category-form" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium mb-1">Category Name</label>
+                    <input type="text" id="quick-category-name" required class="input-field w-full px-3 py-2 rounded-lg" placeholder="e.g. Shoes, Rackets">
+                </div>
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="button" onclick="closeAddCategoryModal()" class="px-4 py-2 rounded-lg border border-[var(--border-color)] hover:bg-[var(--border-color)] text-sm">Cancel</button>
+                    <button type="submit" class="btn-primary px-4 py-2 rounded-lg text-sm font-medium">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Receipt Modal -->
+    <div id="receipt-modal" class="hidden fixed inset-0 z-[100] flex items-center justify-center bg-black bg-opacity-50 no-print">
+        <div class="bg-white text-black p-8 rounded-xl shadow-2xl w-full max-w-sm relative">
+            <button onclick="closeReceipt()" class="absolute top-4 right-4 text-gray-500 hover:text-black no-print">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+            
+            <div id="receipt-content"></div>
+            
+            <div class="mt-8 pt-4 border-t border-dashed flex gap-4 no-print">
+                <button onclick="window.print()" class="btn-primary flex-1 py-2 rounded-lg font-bold"><i class="fas fa-print mr-2"></i> Print</button>
+                <button onclick="closeReceipt()" class="bg-gray-200 text-gray-800 flex-1 py-2 rounded-lg font-bold hover:bg-gray-300">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK & Application Logic -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, onSnapshot, collection, addDoc, enableIndexedDbPersistence } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDcJCZkUdm6A8mEZpCJxnTUDW-l5MUj-Ao",
+            authDomain: "sport-market-bebbd.firebaseapp.com",
+            projectId: "sport-market-bebbd",
+            storageBucket: "sport-market-bebbd.firebasestorage.app",
+            messagingSenderId: "893993300910",
+            appId: "1:893993300910:web:c71bc8abaa79f0ca044e3f",
+            measurementId: "G-WTHYG7SQ32"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // Offline Persistence
+        enableIndexedDbPersistence(db).catch((err) => {
+            console.warn("Persistence error:", err.code);
+        });
+
+        // App States
+        let currentUser = null;
+        let shopName = "My Sports Shop";
+        let products = [];
+        let categories = [];
+        let sales = [];
+        let cart = [];
+        let unsubscribes = [];
+
+        let currentLang = localStorage.getItem('sportsshop_lang') || 'en';
+        let salesChartInstance = null;
+        let categoryChartInstance = null;
+
+        const i18n = {
+            en: {
+                'nav-pos': 'POS', 'nav-inventory': 'Inventory', 'nav-dashboard': 'Dashboard', 'nav-settings': 'Settings', 'nav-lang': 'EN / မြန်မာ', 'nav-logout': 'Logout',
+                'title-dashboard': 'Dashboard Summary', 'lbl-total-sales': 'Total Sales', 'lbl-total-profit': 'Net Profit', 'lbl-items-sold': 'Products Sold', 'lbl-low-stock': 'Low Stock Alerts',
+                'lbl-chart-sales': 'Sales Trend (Last 7 Days)', 'lbl-chart-category': 'Sales by Category',
+                'title-inventory': 'Inventory Management', 'title-add-product': 'Add New Product', 'lbl-prod-name': 'Product Name', 'lbl-category': 'Category',
+                'lbl-buy-price': 'Buy Price (Ks)', 'lbl-sell-price': 'Sell Price (Ks)', 'lbl-stock': 'Stock Qty', 'btn-add-product': 'Add Product',
+                'title-prod-list': 'Product List', 'th-name': 'Name', 'th-cat': 'Category', 'th-buy': 'Buy Price', 'th-sell': 'Sell Price', 'th-stock': 'Stock', 'th-actions': 'Actions',
+                'lbl-current-order': 'Current Order', 'lbl-total': 'Total', 'lbl-checkout': 'Checkout', 'title-settings': 'Application Settings',
+                'lbl-connect-printer': 'Connect Printer', 'lbl-printer-desc': 'Receipts will automatically print after checkout when connected. (Chrome only)',
+                'lbl-add-quick-cat': 'Add New Category'
+            },
+            mm: {
+                'nav-pos': 'အရောင်း', 'nav-inventory': 'ကုန်စည်စာရင်း', 'nav-dashboard': 'စာရင်းချုပ်', 'nav-settings': 'ဆက်တင်များ', 'nav-lang': 'EN / မြန်မာ', 'nav-logout': 'ထွက်မည်',
+                'title-dashboard': 'လုပ်ငန်း စာရင်းချုပ်', 'lbl-total-sales': 'စုစုပေါင်း ရောင်းရငွေ', 'lbl-total-profit': 'အသားတင် အမြတ်ငွေ', 'lbl-items-sold': 'ရောင်းရသည့် အရေအတွက်', 'lbl-low-stock': 'ပစ္စည်းပြတ်လပ်မှု သတိပေးချက်',
+                'lbl-chart-sales': 'ရက်သတ္တပတ်အတွင်း အရောင်းပြမျဉ်း', 'lbl-chart-category': 'အမျိုးအစားအလိုက် ရောင်းရမှု',
+                'title-inventory': 'ကုန်စည် စီမံခန့်ခွဲမှု', 'title-add-product': 'ပစ္စည်းအသစ်ထည့်မည်', 'lbl-prod-name': 'ပစ္စည်းအမည်', 'lbl-category': 'အမျိုးအစား',
+                'lbl-buy-price': 'ဝယ်ရင်းဈေး (Ks)', 'lbl-sell-price': 'ရောင်းဈေး (Ks)', 'lbl-stock': 'လက်ကျန်အရေအတွက်', 'btn-add-product': 'ပစ္စည်းထည့်မည်',
+                'title-prod-list': 'ပစ္စည်းများ စာရင်း', 'th-name': 'အမည်', 'th-cat': 'အမျိုးအစား', 'th-buy': 'ဝယ်ရင်းဈေး', 'th-sell': 'ရောင်းဈေး', 'th-stock': 'လက်ကျန်', 'th-actions': 'လုပ်ဆောင်ချက်',
+                'lbl-current-order': 'လက်ရှိ အရောင်းစာရင်း', 'lbl-total': 'စုစုပေါင်း', 'lbl-checkout': 'ငွေရှင်းမည်', 'title-settings': 'ဆက်တင်များ',
+                'lbl-connect-printer': 'စက်ရှာပြီး ချိတ်မည်', 'lbl-printer-desc': 'ချိတ်ဆက်ထားပါက အရောင်းပြီးဆုံးသည်နှင့် စက်မှ ဘောက်ချာ အလိုအလျောက် ထွက်လာပါမည်။ (Chrome သာ)',
+                'lbl-add-quick-cat': 'အမျိုးအစား အသစ်ထည့်ရန်'
+            }
+        };
+
+        window.toggleLanguage = function() {
+            currentLang = currentLang === 'en' ? 'mm' : 'en';
+            localStorage.setItem('sportsshop_lang', currentLang);
+            applyTranslation();
+            if (salesChartInstance || categoryChartInstance) {
+                updateDashboard();
+            }
+        };
+
+        function applyTranslation() {
+            const dict = i18n[currentLang];
+            for (const key in dict) {
+                const el = document.getElementById(key);
+                if (el) {
+                    if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
+                        el.placeholder = dict[key];
+                    } else {
+                        el.textContent = dict[key];
+                    }
+                }
+            }
+        }
+
+        const toastEl = document.getElementById('toast');
+        const loginView = document.getElementById('login-view');
+        const appView = document.getElementById('app-view');
+        
+        window.showToast = function(message) {
+            toastEl.textContent = message;
+            toastEl.classList.add('show');
+            setTimeout(() => { toastEl.classList.remove('show'); }, 3000);
+        };
+
+        window.formatCur = function(num) {
+            return "Ks " + Number(num).toLocaleString();
+        };
+
+        // Authentication Handlers
+        document.getElementById('show-register').addEventListener('click', (e) => {
+            e.preventDefault();
+            document.getElementById('login-form').classList.add('hidden');
+            document.getElementById('register-form').classList.remove('hidden');
+        });
+
+        document.getElementById('show-login').addEventListener('click', (e) => {
+            e.preventDefault();
+            document.getElementById('register-form').classList.add('hidden');
+            document.getElementById('login-form').classList.remove('hidden');
+        });
+
+        document.getElementById('login-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            try {
+                await signInWithEmailAndPassword(auth, email, password);
+                showToast("Logged in successfully!");
+            } catch (error) {
+                showToast("Login failed: " + error.message);
+            }
+        });
+
+        document.getElementById('register-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('reg-email').value;
+            const password = document.getElementById('reg-password').value;
+            try {
+                const userCred = await createUserWithEmailAndPassword(auth, email, password);
+                await setDoc(doc(db, 'users', userCred.user.uid), {
+                    email: email,
+                    role: 'admin'
+                });
+                showToast("Account created & logged in!");
+            } catch (error) {
+                showToast("Registration failed: " + error.message);
+            }
+        });
+
+        document.getElementById('logout-btn').addEventListener('click', () => {
+            signOut(auth);
+        });
+
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                currentUser = user;
+                
+                // Ensure Admin Role
+                try {
+                    const uRef = doc(db, 'users', user.uid);
+                    const uSnap = await getDoc(uRef);
+                    if (!uSnap.exists()) {
+                        await setDoc(uRef, { email: user.email, role: 'admin' }, { merge: true });
+                    }
+                } catch (e) {
+                    console.warn("Auto admin fallback check:", e);
+                }
+
+                loginView.classList.add('hidden');
+                appView.classList.remove('hidden');
+                loadData();
+                loadLocalTheme();
+                applyTranslation();
+            } else {
+                currentUser = null;
+                loginView.classList.remove('hidden');
+                appView.classList.add('hidden');
+                clearData();
+            }
+        });
+
+        // Data Subscriptions
+        async function loadData() {
+            if (!currentUser) return;
+            try {
+                // Settings Subscription
+                const unsubSettings = onSnapshot(doc(db, 'settings', 'shop_info'), (docSnap) => {
+                    if (docSnap.exists()) {
+                        shopName = docSnap.data().name || "My Sports Shop";
+                    }
+                    updateShopNameUI();
+                }, (error) => console.error("Settings Error:", error));
+                unsubscribes.push(unsubSettings);
+
+                // Categories Subscription
+                const unsubCategories = onSnapshot(collection(db, 'categories'), (snapshot) => {
+                    categories = [];
+                    snapshot.forEach(doc => categories.push({ id: doc.id, ...doc.data() }));
+                    renderCategories();
+                }, (error) => console.error("Category Error:", error));
+                unsubscribes.push(unsubCategories);
+
+                // Products Subscription
+                const unsubProducts = onSnapshot(collection(db, 'products'), (snapshot) => {
+                    products = [];
+                    snapshot.forEach(doc => products.push({ id: doc.id, ...doc.data() }));
+                    renderProductsList();
+                    renderPOSProducts();
+                    updateDashboard();
+                    updateCartUI();
+                }, (error) => console.error("Products Error:", error));
+                unsubscribes.push(unsubProducts);
+
+                // Sales Subscription
+                const unsubSales = onSnapshot(collection(db, 'sales'), (snapshot) => {
+                    sales = [];
+                    snapshot.forEach(doc => sales.push({ id: doc.id, ...doc.data() }));
+                    updateDashboard();
+                }, (error) => console.error("Sales Error:", error));
+                unsubscribes.push(unsubSales);
+            } catch (error) {
+                console.error("Initialization error:", error);
+            }
+        }
+
+        function clearData() {
+            unsubscribes.forEach(unsub => unsub());
+            unsubscribes = [];
+            cart = [];
+            updateCartUI();
+        }
+
+        // Navigation
+        window.switchTab = function(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.getElementById(tabId + '-section').classList.remove('hidden');
+            
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                if (btn.dataset.target === tabId) {
+                    btn.classList.add('bg-[var(--border-color)]', 'text-primary');
+                } else {
+                    btn.classList.remove('bg-[var(--border-color)]', 'text-primary');
+                }
+            });
+
+            if (tabId === 'dashboard') {
+                updateDashboard();
+            }
+        };
+
+        window.toggleMobileCart = function() {
+            const panel = document.getElementById('cart-panel');
+            panel.classList.toggle('translate-y-full');
+        };
+
+        function updateShopNameUI() {
+            document.getElementById('sidebar-shop-name').textContent = shopName;
+            document.getElementById('setting-shop-name').value = shopName;
+            document.title = shopName + " - POS";
+        }
+
+        document.getElementById('settings-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const newName = document.getElementById('setting-shop-name').value;
+            if (!currentUser) return;
+            try {
+                await setDoc(doc(db, 'settings', 'shop_info'), { name: newName }, { merge: true });
+                showToast("Shop name updated successfully!");
+            } catch (err) {
+                showToast("Error updating name: " + err.message);
+            }
+        });
+
+        // Theme Support
+        window.setTheme = function(themeName) {
+            document.body.className = `h-screen w-screen overflow-hidden flex flex-col theme-${themeName}`;
+            localStorage.setItem('sportsshop_theme', themeName);
+        };
+
+        function loadLocalTheme() {
+            const saved = localStorage.getItem('sportsshop_theme');
+            if (saved) window.setTheme(saved);
+        }
+
+        // Categories Handling
+        function renderCategories() {
+            const selectEl = document.getElementById('prod-category');
+            const filtersEl = document.getElementById('pos-category-filters');
+            
+            let selectHTML = '';
+            let filtersHTML = `<button onclick="window.filterPOS('')" class="px-4 py-1 rounded-full btn-primary text-sm whitespace-nowrap pos-filter-btn active" data-cat="">All</button>`;
+
+            categories.forEach(cat => {
+                selectHTML += `<option value="${cat.id}">${cat.name}</option>`;
+                filtersHTML += `<button onclick="window.filterPOS('${cat.id}')" class="px-4 py-1 rounded-full border border-[var(--border-color)] hover:bg-[var(--border-color)] text-sm whitespace-nowrap pos-filter-btn" data-cat="${cat.id}">${cat.name}</button>`;
+            });
+
+            selectEl.innerHTML = selectHTML;
+            filtersEl.innerHTML = filtersHTML;
+        }
+
+        window.openAddCategoryModal = function() {
+            document.getElementById('category-modal').classList.remove('hidden');
+            document.getElementById('quick-category-name').focus();
+        };
+
+        window.closeAddCategoryModal = function() {
+            document.getElementById('category-modal').classList.add('hidden');
+            document.getElementById('quick-category-name').value = '';
+        };
+
+        document.getElementById('inline-category-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const name = document.getElementById('quick-category-name').value.trim();
+            if (!name || !currentUser) return;
+            try {
+                const docRef = await addDoc(collection(db, 'categories'), { name: name });
+                closeAddCategoryModal();
+                showToast("Category added successfully!");
+                setTimeout(() => {
+                    document.getElementById('prod-category').value = docRef.id;
+                }, 300);
+            } catch (err) {
+                showToast("Category Error: " + err.message);
+            }
+        });
+
+        // Product Management
+        document.getElementById('add-product-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (!currentUser) return;
+            const data = {
+                name: document.getElementById('prod-name').value,
+                categoryId: document.getElementById('prod-category').value,
+                buyPrice: Number(document.getElementById('prod-buy-price').value) || 0,
+                price: Number(document.getElementById('prod-price').value),
+                stock: Number(document.getElementById('prod-stock').value)
+            };
+            try {
+                await addDoc(collection(db, 'products'), data);
+                document.getElementById('prod-name').value = '';
+                document.getElementById('prod-buy-price').value = '';
+                document.getElementById('prod-price').value = '';
+                document.getElementById('prod-stock').value = '';
+                showToast("Product added successfully!");
+            } catch (err) { 
+                showToast("Error adding product: " + err.message); 
+            }
+        });
+
+        window.deleteProduct = async function(id) {
+            if (!currentUser) return;
+            try {
+                await deleteDoc(doc(db, 'products', id));
+                showToast("Product deleted");
+            } catch (err) { 
+                showToast("Error: " + err.message); 
+            }
+        };
+
+        function renderProductsList() {
+            const listEl = document.getElementById('inventory-list');
+            const search = document.getElementById('search-inventory').value.toLowerCase();
+            
+            let html = '';
+            products.filter(p => p.name.toLowerCase().includes(search)).forEach(p => {
+                const catName = categories.find(c => c.id === p.categoryId)?.name || 'Unknown';
+                const stockClass = p.stock < 5 ? 'text-red-500 font-bold' : '';
+                const buyPriceStr = p.buyPrice ? formatCur(p.buyPrice) : '-';
+                html += `
+                    <tr class="hover:bg-[var(--border-color)] hover:bg-opacity-20 transition-colors">
+                        <td class="p-3 font-medium">${p.name}</td>
+                        <td class="p-3 opacity-80">${catName}</td>
+                        <td class="p-3 text-blue-500 opacity-80">${buyPriceStr}</td>
+                        <td class="p-3 font-bold">${formatCur(p.price)}</td>
+                        <td class="p-3 ${stockClass}">${p.stock}</td>
+                        <td class="p-3 text-right">
+                            <button onclick="window.deleteProduct('${p.id}')" class="text-red-500 hover:text-red-700 bg-red-500 bg-opacity-10 w-8 h-8 rounded-full">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+            listEl.innerHTML = html;
+        }
+
+        document.getElementById('search-inventory').addEventListener('input', renderProductsList);
+
+        // POS & Ordering
+        let activePosCategory = '';
+        window.filterPOS = function(catId) {
+            activePosCategory = catId;
+            document.querySelectorAll('.pos-filter-btn').forEach(btn => {
+                if (btn.dataset.cat === catId) {
+                    btn.classList.add('btn-primary');
+                    btn.classList.remove('border', 'border-[var(--border-color)]');
+                } else {
+                    btn.classList.remove('btn-primary');
+                    btn.classList.add('border', 'border-[var(--border-color)]');
+                }
+            });
+            renderPOSProducts();
+        };
+
+        function renderPOSProducts() {
+            const grid = document.getElementById('pos-product-grid');
+            let filtered = products;
+            if (activePosCategory) {
+                filtered = products.filter(p => p.categoryId === activePosCategory);
+            }
+
+            let html = '';
+            filtered.forEach(p => {
+                const isOutOfStock = p.stock <= 0;
+                html += `
+                    <div onclick="${isOutOfStock ? '' : `window.addToCart('${p.id}')`}" class="panel p-4 rounded-xl shadow-sm cursor-pointer hover:shadow-md transition-all border border-transparent hover:border-primary flex flex-col justify-between h-32 ${isOutOfStock ? 'opacity-50 grayscale cursor-not-allowed' : ''}">
+                        <div>
+                            <h4 class="font-bold text-sm leading-tight line-clamp-2">${p.name}</h4>
+                            <p class="text-xs opacity-70 mt-1">Stock: ${p.stock}</p>
+                        </div>
+                        <div class="font-bold text-primary">${formatCur(p.price)}</div>
+                    </div>
+                `;
+            });
+            grid.innerHTML = html;
+        }
+
+        window.addToCart = function(productId) {
+            const product = products.find(p => p.id === productId);
+            if (!product || product.stock <= 0) return;
+
+            const existing = cart.find(item => item.id === productId);
+            if (existing) {
+                if (existing.qty < product.stock) {
+                    existing.qty += 1;
+                } else {
+                    showToast("Not enough stock!");
+                    return;
+                }
+            } else {
+                cart.push({ ...product, qty: 1 });
+            }
+            updateCartUI();
+        };
+
+        window.updateCartQty = function(productId, delta) {
+            const index = cart.findIndex(item => item.id === productId);
+            if (index === -1) return;
+            
+            const product = products.find(p => p.id === productId);
+            const newQty = cart[index].qty + delta;
+
+            if (newQty <= 0) {
+                cart.splice(index, 1);
+            } else if (product && newQty > product.stock) {
+                showToast("Cannot exceed available stock!");
+            } else {
+                cart[index].qty = newQty;
+            }
+            updateCartUI();
+        };
+
+        function updateCartUI() {
+            const container = document.getElementById('cart-items');
+            let total = 0;
+            let itemCount = 0;
+            
+            if (cart.length === 0) {
+                container.innerHTML = '<div class="text-center opacity-50 py-10"><i class="fas fa-shopping-basket text-4xl mb-3"></i><br>Cart is empty</div>';
+            } else {
+                let html = '';
+                cart.forEach(item => {
+                    const itemTotal = item.price * item.qty;
+                    total += itemTotal;
+                    itemCount += item.qty;
+                    
+                    const liveProduct = products.find(p => p.id === item.id);
+                    const isError = !liveProduct || item.qty > liveProduct.stock;
+
+                    html += `
+                        <div class="flex flex-col gap-2 p-3 bg-[var(--bg-color)] rounded-lg ${isError ? 'border border-red-500' : ''}">
+                            <div class="flex justify-between items-start">
+                                <span class="font-medium text-sm leading-tight pr-2">${item.name}</span>
+                                <button onclick="window.updateCartQty('${item.id}', -${item.qty})" class="text-red-500 text-xs"><i class="fas fa-trash"></i></button>
+                            </div>
+                            <div class="flex justify-between items-center mt-1">
+                                <span class="font-bold text-primary text-sm">${formatCur(item.price)}</span>
+                                <div class="flex items-center gap-2 bg-[var(--panel-bg)] rounded-md px-2 py-1 shadow-sm">
+                                    <button onclick="window.updateCartQty('${item.id}', -1)" class="w-6 h-6 flex justify-center items-center rounded bg-gray-200 text-black hover:bg-gray-300">-</button>
+                                    <span class="text-sm font-medium w-6 text-center ${isError ? 'text-red-500' : ''}">${item.qty}</span>
+                                    <button onclick="window.updateCartQty('${item.id}', 1)" class="w-6 h-6 flex justify-center items-center rounded bg-[var(--primary)] text-white hover:opacity-80">+</button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                container.innerHTML = html;
+            }
+
+            document.getElementById('cart-total').textContent = formatCur(total);
+            document.getElementById('cart-count').textContent = `${itemCount} items`;
+        }
+
+        window.checkout = async function() {
+            if (!currentUser || cart.length === 0) return;
+            
+            let valid = true;
+            for (let item of cart) {
+                const liveProd = products.find(p => p.id === item.id);
+                if (!liveProd || item.qty > liveProd.stock) {
+                    valid = false;
+                    break;
+                }
+            }
+
+            if (!valid) {
+                showToast("Cart contains items exceeding available stock.");
+                return;
+            }
+
+            const total = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+            let totalCost = 0;
+            cart.forEach(item => {
+                const liveProd = products.find(p => p.id === item.id);
+                const itemBuyPrice = (liveProd && liveProd.buyPrice) ? liveProd.buyPrice : 0;
+                totalCost += (itemBuyPrice * item.qty);
+            });
+
+            const saleData = {
+                items: cart.map(i => ({ id: i.id, name: i.name, price: i.price, qty: i.qty })),
+                total: total,
+                totalCost: totalCost,
+                timestamp: new Date().toISOString(),
+                cashierId: currentUser.uid
+            };
+
+            try {
+                for (const item of cart) {
+                    const productRef = doc(db, 'products', item.id);
+                    const liveProd = products.find(p => p.id === item.id);
+                    const newStock = Math.max(0, liveProd.stock - item.qty);
+                    await updateDoc(productRef, { stock: newStock });
+                }
+
+                await addDoc(collection(db, 'sales'), saleData);
+                
+                // Auto print via Bluetooth if paired
+                if (typeof window.printBluetoothReceipt === "function") {
+                    window.printBluetoothReceipt(saleData);
+                }
+
+                showReceipt(saleData);
+                
+                cart = [];
+                updateCartUI();
+                showToast("Checkout successful!");
+            } catch (err) {
+                showToast("Checkout failed: " + err.message);
+            }
+        };
+
+        // Receipts
+        window.showReceipt = function(saleData) {
+            const content = document.getElementById('receipt-content');
+            let dateStr = new Date(saleData.timestamp).toLocaleString();
+            let itemsHtml = '';
+            
+            saleData.items.forEach(item => {
+                itemsHtml += `
+                    <div class="flex justify-between py-1 text-sm border-b border-gray-100">
+                        <div>
+                            <span class="font-medium">${item.name}</span>
+                            <span class="text-xs text-gray-500 block">${item.qty} x ${formatCur(item.price)}</span>
+                        </div>
+                        <span class="font-medium">${formatCur(item.qty * item.price)}</span>
+                    </div>
+                `;
+            });
+
+            content.innerHTML = `
+                <div class="text-center mb-4">
+                    <h2 class="text-xl font-bold">${shopName}</h2>
+                    <p class="text-xs text-gray-500">Sales Voucher</p>
+                    <p class="text-xs text-gray-400 mt-1">${dateStr}</p>
+                </div>
+                <div class="border-t border-b border-gray-200 py-2 mb-4 space-y-1">
+                    ${itemsHtml}
+                </div>
+                <div class="flex justify-between items-center text-lg font-bold">
+                    <span>Total Amount:</span>
+                    <span class="text-blue-600">${formatCur(saleData.total)}</span>
+                </div>
+                <p class="text-center text-xs text-gray-400 mt-6">Thank you for shopping with us!</p>
+            `;
+
+            document.getElementById('receipt-modal').classList.remove('hidden');
+        };
+
+        window.closeReceipt = function() {
+            document.getElementById('receipt-modal').classList.add('hidden');
+        };
+
+        // Dashboard Visualizations
+        function updateDashboard() {
+            const totalRevenue = sales.reduce((sum, sale) => sum + sale.total, 0);
+            const totalCost = sales.reduce((sum, sale) => sum + (sale.totalCost || 0), 0);
+            const totalProfit = totalRevenue - totalCost;
+
+            let totalItemsSold = 0;
+            sales.forEach(sale => {
+                sale.items.forEach(item => totalItemsSold += item.qty);
+            });
+
+            document.getElementById('dash-total-sales').textContent = formatCur(totalRevenue);
+            document.getElementById('dash-total-profit').textContent = formatCur(totalProfit);
+            document.getElementById('dash-items-sold').textContent = totalItemsSold;
+
+            const lowStockItems = products.filter(p => p.stock < 5);
+            document.getElementById('dash-low-stock-count').textContent = lowStockItems.length;
+
+            let html = '';
+            if (lowStockItems.length === 0) {
+                html = `<tr><td colspan="3" class="p-4 text-center opacity-50">Stock levels are good!</td></tr>`;
+            } else {
+                lowStockItems.forEach(p => {
+                    const catName = categories.find(c => c.id === p.categoryId)?.name || '';
+                    html += `
+                        <tr class="border-b border-[var(--border-color)]">
+                            <td class="py-3 font-medium">${p.name}</td>
+                            <td class="py-3 opacity-70">${catName}</td>
+                            <td class="py-3 text-right text-red-500 font-bold">${p.stock}</td>
+                        </tr>
+                    `;
+                });
+            }
+            document.getElementById('low-stock-list').innerHTML = html;
+
+            updateCharts();
+        }
+
+        function updateCharts() {
+            const last7Days = [...Array(7)].map((_, i) => {
+                const d = new Date();
+                d.setDate(d.getDate() - i);
+                return d.toISOString().split('T')[0];
+            }).reverse();
+
+            const dailySales = last7Days.map(dateStr => {
+                return sales.filter(s => s.timestamp.startsWith(dateStr))
+                            .reduce((sum, s) => sum + s.total, 0);
+            });
+
+            const barCtx = document.getElementById('salesBarChart');
+            if (barCtx) {
+                if (salesChartInstance) salesChartInstance.destroy();
+                salesChartInstance = new Chart(barCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: last7Days.map(d => d.slice(5)),
+                        datasets: [{
+                            label: currentLang === 'en' ? 'Daily Sales (Ks)' : 'နေ့စဉ်ရောင်းရငွေ (Ks)',
+                            data: dailySales,
+                            backgroundColor: '#3b82f6',
+                            borderRadius: 6
+                        }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false }
+                });
+            }
+
+            const catSales = {};
+            sales.forEach(sale => {
+                sale.items.forEach(item => {
+                    const prod = products.find(p => p.id === item.id);
+                    if (prod) {
+                        const cat = categories.find(c => c.id === prod.categoryId);
+                        const catName = cat ? cat.name : 'Other';
+                        catSales[catName] = (catSales[catName] || 0) + (item.price * item.qty);
+                    }
+                });
+            });
+
+            const pieCtx = document.getElementById('categoryPieChart');
+            if (pieCtx && Object.keys(catSales).length > 0) {
+                if (categoryChartInstance) categoryChartInstance.destroy();
+                categoryChartInstance = new Chart(pieCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: Object.keys(catSales),
+                        datasets: [{
+                            data: Object.values(catSales),
+                            backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899']
+                        }]
+                    },
+                    options: { 
+                        responsive: true, 
+                        maintainAspectRatio: false,
+                        plugins: { legend: { position: 'bottom' } }
+                    }
+                });
+            }
+        }
+
+        // Bluetooth Thermal Printer
+        let btDevice = null;
+        let btCharacteristic = null;
+
+        window.connectBluetoothPrinter = async function() {
+            try {
+                btDevice = await navigator.bluetooth.requestDevice({
+                    acceptAllDevices: true,
+                    optionalServices: [
+                        '000018f0-0000-1000-8000-00805f9b34fb',
+                        '49535343-fe7d-4ae5-8fa9-9fafd205e455',
+                        'e7810a71-73ae-499d-8c15-faa9aef0c3f2'
+                    ]
+                });
+                const server = await btDevice.gatt.connect();
+                const services = await server.getPrimaryServices();
+                
+                for (const service of services) {
+                    const characteristics = await service.getCharacteristics();
+                    for (const char of characteristics) {
+                        if (char.properties.write || char.properties.writeWithoutResponse) {
+                            btCharacteristic = char;
+                            break;
+                        }
+                    }
+                    if (btCharacteristic) break;
+                }
+                
+                const statusEl = document.getElementById('printer-status');
+                if (btCharacteristic) {
+                    statusEl.textContent = (currentLang === 'en' ? "Connected: " : "ချိတ်ဆက်ထားသည် - ") + btDevice.name;
+                    statusEl.classList.remove('hidden');
+                    showToast(currentLang === 'en' ? "Printer connected!" : "Printer ချိတ်ဆက်ပြီးပါပြီ");
+                } else {
+                    showToast("Printer characteristic write not supported.");
+                }
+            } catch (err) {
+                console.error(err);
+                showToast("Bluetooth Connection cancelled or failed.");
+            }
+        };
+
+        window.printBluetoothReceipt = async function(saleData) {
+            if (!btCharacteristic) return;
+            
+            const encoder = new TextEncoder();
+            const ESC = "\x1B";
+            const GS = "\x1D";
+            const init = ESC + "@";
+            const alignCenter = ESC + "a\x01";
+            const alignLeft = ESC + "a\x00";
+            const boldOn = ESC + "E\x01";
+            const boldOff = ESC + "E\x00";
+            const cut = "\n\n\n\n" + GS + "V\x41\x00";
+
+            let dateStr = new Date(saleData.timestamp).toLocaleString();
+            let receiptText = init + alignCenter + boldOn + shopName + "\n" + boldOff;
+            receiptText += "--------------------------------\n";
+            receiptText += alignLeft + "Date: " + dateStr + "\n";
+            receiptText += "--------------------------------\n";
+            
+            saleData.items.forEach(item => {
+                let itemTotal = item.qty * item.price;
+                receiptText += `${item.name}\n${item.qty} x ${item.price} = Ks ${itemTotal}\n`;
+            });
+            
+            receiptText += "--------------------------------\n";
+            receiptText += alignCenter + boldOn + "Total: Ks " + saleData.total + boldOff + "\n";
+            receiptText += "Thank You!\n" + cut;
+
+            try {
+                await btCharacteristic.writeValue(encoder.encode(receiptText));
+            } catch (err) {
+                console.error("Print Error:", err);
+                showToast("Bluetooth Printing Failed.");
+            }
+        };
+
+        // Register Service Worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(reg => console.log('ServiceWorker registered:', reg.scope))
+                    .catch(err => console.log('ServiceWorker failed:', err));
+            });
+        }
+    </script>
+</body>
+</html>
