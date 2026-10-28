@@ -770,7 +770,6 @@
             try {
                 await signInWithEmailAndPassword(auth, email, password);
                 showToast("Logged in successfully!");
-                checkAutoShowInstallBanner();
             } catch (error) {
                 showToast("Login failed: " + error.message);
             }
@@ -784,7 +783,6 @@
                 const userCred = await createUserWithEmailAndPassword(auth, email, password);
                 await setDoc(doc(db, 'users', userCred.user.uid), { email: email, role: 'admin' });
                 showToast("Account created & logged in!");
-                checkAutoShowInstallBanner();
             } catch (error) {
                 showToast("Registration failed: " + error.message);
             }
@@ -810,7 +808,6 @@
                 loadData();
                 loadLocalTheme();
                 applyTranslation();
-                checkAutoShowInstallBanner();
             } else {
                 currentUser = null;
                 loginView.classList.remove('hidden');
@@ -1536,29 +1533,38 @@
         };
 
         // ==========================================
-        // 1. AUTO SLIDE-UP INSTALL BANNER LOGIC (IMPROVED)
+        // 1. AUTO SLIDE-UP INSTALL BANNER (GUARANTEED VISIBILITY)
         // ==========================================
         let deferredPrompt = null;
         const autoBanner = document.getElementById('pwa-auto-banner');
-        const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+        
+        // ဖုန်းထဲတွင် သွင်းထားပြီးသား ဟုတ်မဟုတ် စစ်ဆေးခြင်း
+        const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
 
-        // Chrome မှ PWA Native Install စနစ် အသင့်ဖြစ်သည်နှင့် ဖမ်းယူပြီး Banner ပြသခြင်း
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            deferredPrompt = e;
-            showInstallBannerDirectly();
-        });
-
-        function showInstallBannerDirectly() {
+        // ဖုန်းထဲတွင် မသွင်းရသေးပါက Banner ကို အစကတည်းက အလိုအလျောက် ပေါ်နေစေမည်
+        function checkAndShowBanner() {
             if (!isStandalone && !sessionStorage.getItem('pwa_banner_dismissed')) {
                 if (autoBanner) autoBanner.classList.remove('hidden');
             }
         }
 
-        // Install ခလုတ် နှိပ်လိုက်သည်နှင့် ဖုန်း System Install Dialog ကို တိုက်ရိုက် ခေါ်ယူခြင်း
+        // Chrome မှ Native Install Event ရရှိလျှင် သိမ်းဆည်းထားမည်
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            checkAndShowBanner();
+        });
+
+        // စာမျက်နှာ စဖွင့်ဖွင့်ချင်း ၁ စက္ကန့်အကြာတွင် Banner ကို အလိုအလျောက် ပေါ်စေမည်
+        setTimeout(checkAndShowBanner, 1000);
+
+        // စာမျက်နှာကို လက်နှင့် စတင်ထိတွေ့သည့်အခါတွင်လည်း Banner ကို အလိုအလျောက် ဖော်ပေးမည်
+        window.addEventListener('touchstart', checkAndShowBanner, { once: true });
+        window.addEventListener('click', checkAndShowBanner, { once: true });
+
+        // Install ခလုတ် နှိပ်လိုက်သည်နှင့် ဖုန်း၏ Native System Install Dialog ကို တိုက်ရိုက် ခေါ်ယူခြင်း
         window.triggerPWAInstall = async function() {
             if (deferredPrompt) {
-                // Browser Native Prompt အား ချက်ချင်း ခေါ်ယူခြင်း
                 deferredPrompt.prompt();
                 const { outcome } = await deferredPrompt.userChoice;
                 if (outcome === 'accepted') {
@@ -1567,7 +1573,6 @@
                 }
                 deferredPrompt = null;
             } else {
-                // System Prompt အဆင်သင့် ဖြစ်မလာသေးပါက စက္ကန့်ပိုင်းစောင့်ရန် တိုက်တွန်းခြင်း
                 showToast(currentLang === 'en' 
                     ? "Connecting to device... Please tap again in a moment." 
                     : "စနစ်ချိတ်ဆက်နေပါသည်... ခေတ္တစောင့်ပြီး ထပ်နှိပ်ပေးပါခင်ဗျာ။");
