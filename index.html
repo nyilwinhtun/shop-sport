@@ -1542,36 +1542,35 @@
         const autoBanner = document.getElementById('pwa-auto-banner');
         const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
 
+        // Chrome မှ PWA Native Install စနစ် အသင့်ဖြစ်သည်နှင့် ဖမ်းယူပြီး Banner ပြသခြင်း
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
             deferredPrompt = e;
-            checkAutoShowInstallBanner();
+            showInstallBannerDirectly();
         });
 
-        function checkAutoShowInstallBanner() {
+        function showInstallBannerDirectly() {
             if (!isStandalone && !sessionStorage.getItem('pwa_banner_dismissed')) {
                 if (autoBanner) autoBanner.classList.remove('hidden');
             }
         }
 
-        // စာမျက်နှာကို လက်နှင့် စတင်ထိတွေ့လိုက်သည်နှင့် Banner အား Auto ပေါ်စေခြင်း
-        window.addEventListener('pointerdown', () => {
-            checkAutoShowInstallBanner();
-        }, { once: true });
-
+        // Install ခလုတ် နှိပ်လိုက်သည်နှင့် ဖုန်း System Install Dialog ကို တိုက်ရိုက် ခေါ်ယူခြင်း
         window.triggerPWAInstall = async function() {
             if (deferredPrompt) {
+                // Browser Native Prompt အား ချက်ချင်း ခေါ်ယူခြင်း
                 deferredPrompt.prompt();
                 const { outcome } = await deferredPrompt.userChoice;
                 if (outcome === 'accepted') {
-                    showToast(currentLang === 'en' ? "App installed successfully!" : "App အဖြစ် သွင်းယူပြီးပါပြီ!");
+                    showToast(currentLang === 'en' ? "Installing to Home Screen..." : "ဖုန်းထဲသို့ ထည့်သွင်းနေပါသည်...");
                     if (autoBanner) autoBanner.classList.add('hidden');
                 }
                 deferredPrompt = null;
             } else {
+                // System Prompt အဆင်သင့် ဖြစ်မလာသေးပါက စက္ကန့်ပိုင်းစောင့်ရန် တိုက်တွန်းခြင်း
                 showToast(currentLang === 'en' 
-                    ? "Tap Chrome Menu (⋮) > 'Install App' or 'Add to Home Screen'"
-                    : "Chrome Menu (⋮) မှ 'Install app' သို့မဟုတ် 'Add to Home screen' ကို နှိပ်ပါ");
+                    ? "Connecting to device... Please tap again in a moment." 
+                    : "စနစ်ချိတ်ဆက်နေပါသည်... ခေတ္တစောင့်ပြီး ထပ်နှိပ်ပေးပါခင်ဗျာ။");
             }
         };
 
