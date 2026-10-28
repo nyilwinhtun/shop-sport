@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Sports Shop POS & Inventory</title>
     
-    <!-- PWA Manifest -->
+    <!-- PWA Manifest & App Tags -->
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#3b82f6">
     <meta name="mobile-web-app-capable" content="yes">
@@ -109,6 +109,7 @@
         #toast {
             visibility: hidden;
             min-width: 250px;
+            max-width: 90vw;
             background-color: #1f2937;
             color: #fff;
             text-align: center;
@@ -122,6 +123,7 @@
             opacity: 0;
             box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
             transition: opacity 0.3s, visibility 0.3s;
+            word-break: break-word;
         }
         #toast.show {
             visibility: visible;
@@ -147,16 +149,16 @@
                 <p class="text-sm opacity-70">Login to account</p>
             </div>
             
-            <form id="login-form" class="space-y-4">
+            <form id="login-form" class="space-y-4" onsubmit="return false;">
                 <div>
                     <label class="block text-sm font-medium mb-1">Email</label>
-                    <input type="email" id="email" required class="input-field w-full px-4 py-2.5 rounded-xl" placeholder="admin@shop.com">
+                    <input type="email" id="email" required class="input-field w-full px-4 py-2.5 rounded-xl" placeholder="admin@shop.com" autocomplete="email">
                 </div>
                 <div>
                     <label class="block text-sm font-medium mb-1">Password</label>
-                    <input type="password" id="password" required class="input-field w-full px-4 py-2.5 rounded-xl" placeholder="••••••••">
+                    <input type="password" id="password" required class="input-field w-full px-4 py-2.5 rounded-xl" placeholder="••••••••" autocomplete="current-password">
                 </div>
-                <button type="submit" id="btn-login-submit" class="btn-primary w-full py-3 rounded-xl font-medium shadow-md mt-2 flex items-center justify-center gap-2">
+                <button type="button" id="btn-login-submit" class="btn-primary w-full py-3 rounded-xl font-medium shadow-md mt-2 flex items-center justify-center gap-2 active:scale-98">
                     <span id="login-spinner" class="hidden"><i class="fas fa-spinner fa-spin"></i></span>
                     <span id="login-btn-text">Login</span>
                 </button>
@@ -165,16 +167,16 @@
                 </div>
             </form>
 
-            <form id="register-form" class="space-y-4 hidden">
+            <form id="register-form" class="space-y-4 hidden" onsubmit="return false;">
                 <div>
                     <label class="block text-sm font-medium mb-1">Email</label>
-                    <input type="email" id="reg-email" required class="input-field w-full px-4 py-2.5 rounded-xl" placeholder="admin@shop.com">
+                    <input type="email" id="reg-email" required class="input-field w-full px-4 py-2.5 rounded-xl" placeholder="admin@shop.com" autocomplete="email">
                 </div>
                 <div>
                     <label class="block text-sm font-medium mb-1">Password</label>
-                    <input type="password" id="reg-password" required class="input-field w-full px-4 py-2.5 rounded-xl" placeholder="••••••••">
+                    <input type="password" id="reg-password" required class="input-field w-full px-4 py-2.5 rounded-xl" placeholder="••••••••" autocomplete="new-password">
                 </div>
-                <button type="submit" id="btn-reg-submit" class="btn-primary w-full py-3 rounded-xl font-medium shadow-md mt-2 flex items-center justify-center gap-2">
+                <button type="button" id="btn-reg-submit" class="btn-primary w-full py-3 rounded-xl font-medium shadow-md mt-2 flex items-center justify-center gap-2 active:scale-98">
                     <span id="reg-spinner" class="hidden"><i class="fas fa-spinner fa-spin"></i></span>
                     <span id="reg-btn-text">Register</span>
                 </button>
@@ -188,7 +190,7 @@
     <!-- Main App Structure -->
     <div id="app-view" class="hidden flex-1 flex flex-col md:flex-row h-full w-full overflow-hidden">
         
-        <!-- Desktop Sidebar (Hidden on Mobile) -->
+        <!-- Desktop Sidebar -->
         <aside class="hidden md:flex w-64 panel flex-col h-full shadow-lg z-20">
             <div class="p-6 flex items-center gap-3 border-b border-[var(--border-color)]">
                 <i class="fas fa-shopping-cart text-2xl text-primary"></i>
@@ -257,7 +259,7 @@
                     </div>
                 </div>
 
-                <!-- Floating Mobile Cart Bar (Phone Only) -->
+                <!-- Floating Mobile Cart Bar -->
                 <div class="md:hidden fixed bottom-16 left-0 right-0 p-3 bg-gradient-to-t from-[var(--bg-color)] via-[var(--bg-color)] to-transparent z-20">
                     <div onclick="toggleMobileCart(true)" class="btn-primary rounded-2xl p-3 px-4 shadow-xl flex items-center justify-between cursor-pointer active:scale-95 transition-transform">
                         <div class="flex items-center gap-3">
@@ -558,9 +560,7 @@
                 <h3 class="font-bold text-lg" id="lbl-manage-cat-title">Manage Categories</h3>
                 <button onclick="closeManageCategoryModal()" class="text-gray-500 hover:text-red-500"><i class="fas fa-times"></i></button>
             </div>
-            <div class="flex-1 overflow-y-auto space-y-2 pr-1" id="manage-category-list">
-                <!-- Categories populated by JS -->
-            </div>
+            <div class="flex-1 overflow-y-auto space-y-2 pr-1" id="manage-category-list"></div>
             <div class="mt-4 pt-3 border-t border-[var(--border-color)] flex justify-end">
                 <button onclick="closeManageCategoryModal()" class="btn-primary px-4 py-2 rounded-xl text-xs font-medium">Done</button>
             </div>
@@ -573,9 +573,7 @@
             <button onclick="closeReceipt()" class="absolute top-4 right-4 text-gray-400 hover:text-black no-print">
                 <i class="fas fa-times text-xl"></i>
             </button>
-            
             <div id="receipt-content"></div>
-            
             <div class="mt-6 pt-4 border-t border-dashed flex gap-3 no-print">
                 <button onclick="window.print()" class="btn-primary flex-1 py-2.5 rounded-xl font-bold text-sm"><i class="fas fa-print mr-2"></i> Print</button>
                 <button onclick="closeReceipt()" class="bg-gray-100 text-gray-800 flex-1 py-2.5 rounded-xl font-bold text-sm hover:bg-gray-200">Close</button>
@@ -583,7 +581,7 @@
         </div>
     </div>
 
-    <!-- Auto Slide-up Install Banner (Login ဝင်ပြီးမှ ပေါ်မည့် Banner) -->
+    <!-- Auto Slide-up Install Banner -->
     <div id="pwa-auto-banner" class="hidden fixed bottom-20 md:bottom-6 left-3 right-3 md:left-auto md:right-6 md:w-96 panel p-3.5 md:p-4 rounded-2xl shadow-2xl border-2 border-primary z-[9990] flex items-center justify-between gap-3">
         <div class="flex items-center gap-3">
             <div class="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-primary flex items-center justify-center text-white text-lg md:text-xl shadow flex-shrink-0">
@@ -611,7 +609,6 @@
 
     <!-- AI Chat Window -->
     <div id="ai-chat-window" class="hidden fixed bottom-20 md:bottom-24 right-3 md:right-8 w-[94vw] sm:w-96 panel rounded-2xl shadow-2xl border border-[var(--border-color)] z-[9985] flex flex-col h-[460px] max-h-[75vh] overflow-hidden">
-        <!-- Header -->
         <div class="p-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white flex justify-between items-center shadow">
             <div class="flex items-center gap-2">
                 <i class="fas fa-robot text-lg"></i>
@@ -625,21 +622,18 @@
             </button>
         </div>
         
-        <!-- Messages -->
         <div id="ai-messages" class="flex-1 p-3 overflow-y-auto space-y-2.5 text-xs">
             <div class="bg-[var(--bg-color)] p-2.5 rounded-xl rounded-tl-none max-w-[85%] leading-relaxed border border-[var(--border-color)]">
                 မင်္ဂလာပါခင်ဗျာ! ကျွန်တော်က အားကစားဆိုင်ရဲ့ AI Assistant ဖြစ်ပါတယ်။ အရောင်းစာရင်း၊ အမြတ်ငွေ၊ ပစ္စည်းလက်ကျန် အခြေအနေတွေကို မေးမြန်းနိုင်ပါတယ်။
             </div>
         </div>
 
-        <!-- Quick Prompts -->
         <div class="px-2.5 py-1.5 flex gap-1.5 overflow-x-auto no-scrollbar border-t border-[var(--border-color)] bg-opacity-30">
             <button onclick="sendQuickPrompt('ယနေ့ အရောင်းအခြေအနေ ဘယ်လိုရှိလဲ?')" class="text-[10px] bg-primary/10 text-primary px-2.5 py-1 rounded-full whitespace-nowrap hover:bg-primary/20">📊 ယနေ့အရောင်း</button>
             <button onclick="sendQuickPrompt('လက်ကျန်နည်းနေတဲ့ ပစ္စည်းတွေ ရှိလား?')" class="text-[10px] bg-red-500/10 text-red-500 px-2.5 py-1 rounded-full whitespace-nowrap hover:bg-red-500/20">⚠️ ပစ္စည်းပြတ်လပ်မှု</button>
             <button onclick="sendQuickPrompt('စုစုပေါင်း အမြတ်ငွေ ဘယ်လောက်ရထားလဲ?')" class="text-[10px] bg-green-500/10 text-green-500 px-2.5 py-1 rounded-full whitespace-nowrap hover:bg-green-500/20">💰 စုစုပေါင်းအမြတ်</button>
         </div>
 
-        <!-- Input Box -->
         <form id="ai-chat-form" class="p-2 border-t border-[var(--border-color)] flex gap-2">
             <input type="text" id="ai-input" placeholder="AI အား မေးမြန်းလိုသည်ကို ရိုက်ပါ..." class="input-field flex-1 px-3 py-2 rounded-xl text-xs" required autocomplete="off">
             <button type="submit" class="btn-primary px-3.5 py-2 rounded-xl text-xs font-bold flex items-center justify-center">
@@ -740,7 +734,7 @@
         window.showToast = function(message) {
             toastEl.textContent = message;
             toastEl.classList.add('show');
-            setTimeout(() => { toastEl.classList.remove('show'); }, 3000);
+            setTimeout(() => { toastEl.classList.remove('show'); }, 3500);
         };
 
         window.formatCur = function(num) {
@@ -751,7 +745,7 @@
             signOut(auth);
         };
 
-        // Authentication Handlers with Visual Feedback
+        // Authentication Handlers
         document.getElementById('show-register').addEventListener('click', (e) => {
             e.preventDefault();
             document.getElementById('login-form').classList.add('hidden');
@@ -764,13 +758,17 @@
             document.getElementById('login-form').classList.remove('hidden');
         });
 
-        document.getElementById('login-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
+        async function handleLogin() {
             const email = document.getElementById('email').value.trim();
             const password = document.getElementById('password').value;
             const btn = document.getElementById('btn-login-submit');
             const spinner = document.getElementById('login-spinner');
             const text = document.getElementById('login-btn-text');
+
+            if (!email || !password) {
+                showToast("Please enter email and password");
+                return;
+            }
 
             btn.disabled = true;
             spinner.classList.remove('hidden');
@@ -781,21 +779,25 @@
                 showToast("Logged in successfully!");
             } catch (error) {
                 console.error("Login Error:", error);
-                showToast("Login failed: " + error.message);
+                showToast(error.message || "Login failed");
             } finally {
                 btn.disabled = false;
                 spinner.classList.add('hidden');
                 text.textContent = "Login";
             }
-        });
+        }
 
-        document.getElementById('register-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
+        async function handleRegister() {
             const email = document.getElementById('reg-email').value.trim();
             const password = document.getElementById('reg-password').value;
             const btn = document.getElementById('btn-reg-submit');
             const spinner = document.getElementById('reg-spinner');
             const text = document.getElementById('reg-btn-text');
+
+            if (!email || !password) {
+                showToast("Please enter email and password");
+                return;
+            }
 
             btn.disabled = true;
             spinner.classList.remove('hidden');
@@ -807,12 +809,23 @@
                 showToast("Account created & logged in!");
             } catch (error) {
                 console.error("Register Error:", error);
-                showToast("Registration failed: " + error.message);
+                showToast(error.message || "Registration failed");
             } finally {
                 btn.disabled = false;
                 spinner.classList.add('hidden');
                 text.textContent = "Register";
             }
+        }
+
+        document.getElementById('btn-login-submit').addEventListener('click', handleLogin);
+        document.getElementById('btn-reg-submit').addEventListener('click', handleRegister);
+
+        // Also allow keyboard Enter on inputs
+        document.getElementById('password').addEventListener('keyup', (e) => {
+            if (e.key === 'Enter') handleLogin();
+        });
+        document.getElementById('reg-password').addEventListener('keyup', (e) => {
+            if (e.key === 'Enter') handleRegister();
         });
 
         document.getElementById('logout-btn').addEventListener('click', signOutAuth);
@@ -836,14 +849,12 @@
                 loadLocalTheme();
                 applyTranslation();
                 
-                // Login ဝင်ပြီးမှသာ PWA Install Banner ကို စစ်ဆေးဖော်ပြပေးမည်
                 checkAndShowBanner();
             } else {
                 currentUser = null;
                 loginView.classList.remove('hidden');
                 appView.classList.add('hidden');
                 clearData();
-                // Logout လုပ်ပါက Install Banner ကို ဝှက်ထားမည်
                 if (autoBanner) autoBanner.classList.add('hidden');
             }
         });
@@ -904,7 +915,6 @@
             const targetSection = document.getElementById(tabId + '-section');
             if (targetSection) targetSection.classList.remove('hidden');
             
-            // Desktop Sidebar
             document.querySelectorAll('.nav-btn-desk').forEach(btn => {
                 if (btn.dataset.target === tabId) {
                     btn.classList.add('bg-[var(--border-color)]', 'text-primary');
@@ -913,7 +923,6 @@
                 }
             });
 
-            // Mobile Bottom Nav
             document.querySelectorAll('.nav-btn-mob').forEach(btn => {
                 if (btn.dataset.target === tabId) {
                     btn.classList.add('text-primary');
@@ -1228,7 +1237,6 @@
             document.getElementById('cart-total').textContent = formatCur(total);
             document.getElementById('cart-count').textContent = `${itemCount} items`;
             
-            // Mobile sync
             document.getElementById('mobile-cart-total').textContent = formatCur(total);
             document.getElementById('mobile-cart-badge').textContent = itemCount;
             document.getElementById('lbl-cart-items-count').textContent = `${itemCount} items`;
@@ -1564,30 +1572,23 @@
             }
         };
 
-        // ==========================================
-        // 1. PWA AUTO SLIDE-UP INSTALL BANNER (ROBUST)
-        // ==========================================
+        // PWA Native Auto Install System
         let deferredPrompt = null;
         const autoBanner = document.getElementById('pwa-auto-banner');
-        
-        // ဖုန်းထဲတွင် App အဖြစ် သွင်းထားပြီးသား ဟုတ်မဟုတ် စစ်ဆေးခြင်း
         const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
 
         function checkAndShowBanner() {
-            // Login ဝင်ထားပြီး ဖုန်းထဲမသွင်းရသေးပါက Banner ကို အလိုအလျောက် ပြသမည်
             if (currentUser && !isStandalone && !sessionStorage.getItem('pwa_banner_dismissed')) {
                 if (autoBanner) autoBanner.classList.remove('hidden');
             }
         }
 
-        // Chrome မှ Native Install Event ကို ဖမ်းယူမှတ်သားထားခြင်း
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
             deferredPrompt = e;
             checkAndShowBanner();
         });
 
-        // Install ခလုတ် နှိပ်လိုက်သည်နှင့် ဖုန်း၏ Native System Install Dialog ကို တိုက်ရိုက် ခေါ်ယူခြင်း
         window.triggerPWAInstall = async function() {
             if (deferredPrompt) {
                 deferredPrompt.prompt();
@@ -1599,8 +1600,8 @@
                 deferredPrompt = null;
             } else {
                 showToast(currentLang === 'en' 
-                    ? "Connecting to device... Please tap again in a moment." 
-                    : "စနစ်ချိတ်ဆက်နေပါသည်... ခေတ္တစောင့်ပြီး ထပ်နှိပ်ပေးပါခင်ဗျာ။");
+                    ? "Install ready: Use browser menu (⋮) -> 'Install App' or wait 10s." 
+                    : "စနစ်အဆင်သင့်ဖြစ်ပါသည်: Browser Menu (⋮) မှ Install App ကို နှိပ်ပါ");
             }
         };
 
@@ -1614,9 +1615,7 @@
             showToast("Sports Shop App Installed!");
         });
 
-        // ==========================================
-        // 2. AI SHOP ASSISTANT LOGIC
-        // ==========================================
+        // AI Assistant Logic
         window.toggleAIChat = function() {
             const chatWin = document.getElementById('ai-chat-window');
             chatWin.classList.toggle('hidden');
@@ -1645,7 +1644,6 @@
             inputEl.value = '';
 
             const botReply = generateAIResponse(userMsg);
-            
             setTimeout(() => {
                 appendAIMessage(botReply, 'bot');
             }, 300);
