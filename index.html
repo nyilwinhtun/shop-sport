@@ -486,19 +486,8 @@
                         </div>
                     </div>
 
-                    <!-- Install Web App Section -->
-                    <div class="panel p-5 md:p-6 rounded-2xl shadow-sm">
-                        <h3 class="font-bold text-base md:text-lg mb-3 border-b border-[var(--border-color)] pb-2 flex items-center gap-2">
-                            <i class="fas fa-download text-primary"></i> Install Application
-                        </h3>
-                        <p class="text-xs md:text-sm opacity-70 mb-4" id="lbl-install-desc">ဖုန်းထဲသို့ Application အဖြစ် တိုက်ရိုက်သွင်းယူပြီး Offline အသုံးပြုနိုင်ပါသည်။</p>
-                        <button type="button" id="btn-pwa-install" onclick="triggerPWAInstall()" class="btn-primary px-5 py-2.5 rounded-xl font-medium shadow-sm flex items-center gap-2">
-                            <i class="fas fa-mobile-alt"></i> <span id="lbl-install-app-btn">Install App on Device</span>
-                        </button>
-                    </div>
-
                     <!-- Bluetooth Thermal Printer -->
-                    <div class="panel p-5 md:p-6 rounded-2xl shadow-sm">
+                    <div class="panel p-5 md:p-6 rounded-2xl shadow-sm md:col-span-2">
                         <h3 class="font-bold text-base md:text-lg mb-2 border-b border-[var(--border-color)] pb-2 flex items-center gap-2">
                             <i class="fas fa-print text-primary"></i> Bluetooth Thermal Printer
                         </h3>
@@ -596,7 +585,7 @@
             </div>
             <div>
                 <h4 class="font-bold text-xs md:text-sm leading-tight" id="lbl-banner-title">Sports Shop POS</h4>
-                <p class="text-[11px] opacity-70 mt-0.5" id="lbl-banner-desc">ဖုန်းထဲသို့ တိုက်ရိုက် Install သွင်းယူပါ</p>
+                <p class="text-[11px] opacity-70 mt-0.5" id="lbl-banner-desc">ဖုန်းထဲသို့ Application သွင်းယူရန်</p>
             </div>
         </div>
         <div class="flex items-center gap-1.5 flex-shrink-0">
@@ -609,7 +598,7 @@
         </div>
     </div>
 
-    <!-- Floating AI Assistant Button (ဖုန်းတွင် လက်မထိလွယ်သော နေရာ) -->
+    <!-- Floating AI Assistant Button -->
     <button id="ai-chat-btn" onclick="toggleAIChat()" class="fixed bottom-20 md:bottom-8 right-4 md:right-8 bg-gradient-to-r from-blue-600 to-indigo-600 text-white w-12 h-12 md:w-14 md:h-14 rounded-full shadow-2xl flex items-center justify-center text-xl z-[9980] hover:scale-105 active:scale-95 transition-all">
         <i class="fas fa-robot"></i>
     </button>
@@ -703,8 +692,8 @@
                 'title-history': 'Sales History', 'th-hist-date': 'Date & Time', 'th-hist-items': 'Items Sold', 'th-hist-profit': 'Profit', 'th-hist-total': 'Total', 'th-hist-action': 'Action',
                 'lbl-current-order': 'Current Order', 'lbl-total': 'Total', 'lbl-checkout': 'Checkout', 'title-settings': 'Application Settings',
                 'lbl-connect-printer': 'Connect Printer', 'lbl-printer-desc': 'Receipts will automatically print after checkout when connected. (Chrome only)',
-                'lbl-install-desc': 'Install as standalone application for quick access and offline use.', 'lbl-install-app-btn': 'Install App on Device',
-                'lbl-add-quick-cat': 'Add New Category', 'lbl-manage-cat-title': 'Manage Categories', 'lbl-view-cart': 'View Cart'
+                'lbl-add-quick-cat': 'Add New Category', 'lbl-manage-cat-title': 'Manage Categories', 'lbl-view-cart': 'View Cart',
+                'lbl-banner-title': 'Sports Shop POS', 'lbl-banner-desc': 'Install as App on your device', 'lbl-btn-banner-install': 'Install'
             },
             mm: {
                 'nav-pos': 'အရောင်း', 'nav-inventory': 'ကုန်စည်စာရင်း', 'nav-history': 'အရောင်းမှတ်တမ်း', 'nav-dashboard': 'စာရင်းချုပ်', 'nav-settings': 'ဆက်တင်များ', 'nav-lang': 'EN / မြန်မာ', 'nav-logout': 'ထွက်မည်',
@@ -717,8 +706,8 @@
                 'title-history': 'ယခင် အရောင်းမှတ်တမ်းများ', 'th-hist-date': 'ရက်စွဲနှင့် အချိန်', 'th-hist-items': 'ရောင်းချခဲ့သည့် ပစ္စည်းများ', 'th-hist-profit': 'အမြတ်ငွေ', 'th-hist-total': 'စုစုပေါင်း ကျသင့်ငွေ', 'th-hist-action': 'ဘောက်ချာ',
                 'lbl-current-order': 'လက်ရှိ အရောင်းစာရင်း', 'lbl-total': 'စုစုပေါင်း', 'lbl-checkout': 'ငွေရှင်းမည်', 'title-settings': 'ဆက်တင်များ',
                 'lbl-connect-printer': 'စက်ရှာပြီး ချိတ်မည်', 'lbl-printer-desc': 'ချိတ်ဆက်ထားပါက အရောင်းပြီးဆုံးသည်နှင့် စက်မှ ဘောက်ချာ အလိုအလျောက် ထွက်လာပါမည်။ (Chrome သာ)',
-                'lbl-install-desc': 'ဖုန်းထဲသို့ Application အဖြစ် တိုက်ရိုက်သွင်းယူပြီး Offline အသုံးပြုနိုင်ပါသည်။', 'lbl-install-app-btn': 'ဖုန်းထဲသို့ App အဖြစ် သွင်းမည်',
-                'lbl-add-quick-cat': 'အမျိုးအစား အသစ်ထည့်ရန်', 'lbl-manage-cat-title': 'အမျိုးအစားများ ပြင်ဆင်/ဖျက်ပစ်ရန်', 'lbl-view-cart': 'ကြည့်မည်'
+                'lbl-add-quick-cat': 'အမျိုးအစား အသစ်ထည့်ရန်', 'lbl-manage-cat-title': 'အမျိုးအစားများ ပြင်ဆင်/ဖျက်ပစ်ရန်', 'lbl-view-cart': 'ကြည့်မည်',
+                'lbl-banner-title': 'Sports Shop POS', 'lbl-banner-desc': 'ဖုန်းထဲသို့ Application သွင်းယူရန်', 'lbl-btn-banner-install': 'သွင်းမည်'
             }
         };
 
@@ -781,6 +770,7 @@
             try {
                 await signInWithEmailAndPassword(auth, email, password);
                 showToast("Logged in successfully!");
+                checkAutoShowInstallBanner();
             } catch (error) {
                 showToast("Login failed: " + error.message);
             }
@@ -794,6 +784,7 @@
                 const userCred = await createUserWithEmailAndPassword(auth, email, password);
                 await setDoc(doc(db, 'users', userCred.user.uid), { email: email, role: 'admin' });
                 showToast("Account created & logged in!");
+                checkAutoShowInstallBanner();
             } catch (error) {
                 showToast("Registration failed: " + error.message);
             }
@@ -819,6 +810,7 @@
                 loadData();
                 loadLocalTheme();
                 applyTranslation();
+                checkAutoShowInstallBanner();
             } else {
                 currentUser = null;
                 loginView.classList.remove('hidden');
@@ -1544,7 +1536,7 @@
         };
 
         // ==========================================
-        // 1. AUTO SLIDE-UP INSTALL BANNER LOGIC
+        // 1. AUTO SLIDE-UP INSTALL BANNER LOGIC (IMPROVED)
         // ==========================================
         let deferredPrompt = null;
         const autoBanner = document.getElementById('pwa-auto-banner');
@@ -1553,13 +1545,19 @@
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
             deferredPrompt = e;
+            checkAutoShowInstallBanner();
+        });
 
+        function checkAutoShowInstallBanner() {
             if (!isStandalone && !sessionStorage.getItem('pwa_banner_dismissed')) {
                 if (autoBanner) autoBanner.classList.remove('hidden');
             }
-            const btn = document.getElementById('btn-pwa-install');
-            if (btn) btn.classList.remove('hidden');
-        });
+        }
+
+        // စာမျက်နှာကို လက်နှင့် စတင်ထိတွေ့လိုက်သည်နှင့် Banner အား Auto ပေါ်စေခြင်း
+        window.addEventListener('pointerdown', () => {
+            checkAutoShowInstallBanner();
+        }, { once: true });
 
         window.triggerPWAInstall = async function() {
             if (deferredPrompt) {
