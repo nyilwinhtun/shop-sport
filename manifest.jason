@@ -2,23 +2,23 @@
 "name": "Sports Shop POS & Inventory",
 "short_name": "SportsPOS",
 "description": "Offline capable point of sale and inventory management system.",
-"start_url": "./index.html",
+"start_url": "index.html",
 "scope": "./",
 "display": "standalone",
-"orientation": "portrait-primary",
+"orientation": "any",
 "background_color": "#f3f4f6",
 "theme_color": "#3b82f6",
 "icons": [
 {
-"src": "https://cdn-icons-png.flaticon.com/192/1165/1165159.png",
+"src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='100' fill='%233b82f6'/%3E%3Cpath d='M256 120a40 40 0 1 0-40-40 40 40 0 0 0 40 40zm128 108l-52-26-28 66 42 78a16 16 0 0 1-28 15l-45-84-47 38v101a16 16 0 0 1-32 0V304a16 16 0 0 1 6-12l46-37-14-68-46 33a16 16 0 0 1-19-26l62-44a16 16 0 0 1 18-1l72 36 39-20a16 16 0 1 1 15 28z' fill='%23ffffff'/%3E%3C/svg%3E",
 "sizes": "192x192",
-"type": "image/png",
+"type": "image/svg+xml",
 "purpose": "any"
 },
 {
-"src": "https://cdn-icons-png.flaticon.com/512/1165/1165159.png",
+"src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='100' fill='%233b82f6'/%3E%3Cpath d='M256 120a40 40 0 1 0-40-40 40 40 0 0 0 40 40zm128 108l-52-26-28 66 42 78a16 16 0 0 1-28 15l-45-84-47 38v101a16 16 0 0 1-32 0V304a16 16 0 0 1 6-12l46-37-14-68-46 33a16 16 0 0 1-19-26l62-44a16 16 0 0 1 18-1l72 36 39-20a16 16 0 1 1 15 28z' fill='%23ffffff'/%3E%3C/svg%3E",
 "sizes": "512x512",
-"type": "image/png",
+"type": "image/svg+xml",
 "purpose": "any maskable"
 }
 ]
