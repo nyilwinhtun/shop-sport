@@ -128,7 +128,6 @@
             opacity: 1;
         }
 
-        /* Mobile touch optimization */
         .touch-action-manipulation {
             touch-action: manipulation;
         }
@@ -371,7 +370,7 @@
                 </div>
             </section>
 
-            <!-- History Section (အရောင်းမှတ်တမ်းသစ်) -->
+            <!-- History Section -->
             <section id="history-section" class="tab-content hidden h-full p-4 md:p-8 overflow-y-auto">
                 <div class="flex flex-wrap gap-3 justify-between items-center mb-4 md:mb-6">
                     <h2 class="text-xl md:text-2xl font-bold" id="title-history">Sales History</h2>
@@ -515,7 +514,7 @@
             </section>
         </main>
 
-        <!-- Mobile Bottom Navigation Bar (ဖုန်းအတွက် အောက်ခြေမီနူး) -->
+        <!-- Mobile Bottom Navigation Bar -->
         <nav class="md:hidden fixed bottom-0 left-0 right-0 panel border-t border-[var(--border-color)] flex justify-around items-center h-16 z-30 shadow-lg">
             <button onclick="switchTab('pos')" class="nav-btn-mob flex flex-col items-center justify-center flex-1 py-1 text-primary active-tab" data-target="pos">
                 <i class="fas fa-calculator text-lg"></i>
@@ -557,7 +556,7 @@
         </div>
     </div>
 
-    <!-- Manage / Delete Categories Modal (Category ဖျက်သည့်စနစ်သစ်) -->
+    <!-- Manage / Delete Categories Modal -->
     <div id="manage-category-modal" class="hidden fixed inset-0 z-[110] flex items-center justify-center bg-black/60 p-4">
         <div class="panel p-6 rounded-2xl shadow-2xl w-full max-w-md flex flex-col max-h-[80vh]">
             <div class="flex justify-between items-center mb-4 border-b border-[var(--border-color)] pb-2">
@@ -587,6 +586,71 @@
                 <button onclick="closeReceipt()" class="bg-gray-100 text-gray-800 flex-1 py-2.5 rounded-xl font-bold text-sm hover:bg-gray-200">Close</button>
             </div>
         </div>
+    </div>
+
+    <!-- Auto Slide-up Install Banner (ဖုန်းထဲ App သွင်းရန် အလိုအလျောက် ပေါ်မည့် Banner) -->
+    <div id="pwa-auto-banner" class="hidden fixed bottom-20 md:bottom-6 left-3 right-3 md:left-auto md:right-6 md:w-96 panel p-3.5 md:p-4 rounded-2xl shadow-2xl border-2 border-primary z-[9990] flex items-center justify-between gap-3">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-primary flex items-center justify-center text-white text-lg md:text-xl shadow flex-shrink-0">
+                <i class="fas fa-running"></i>
+            </div>
+            <div>
+                <h4 class="font-bold text-xs md:text-sm leading-tight" id="lbl-banner-title">Sports Shop POS</h4>
+                <p class="text-[11px] opacity-70 mt-0.5" id="lbl-banner-desc">ဖုန်းထဲသို့ တိုက်ရိုက် Install သွင်းယူပါ</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-1.5 flex-shrink-0">
+            <button onclick="triggerPWAInstall()" class="btn-primary text-xs px-3 py-1.5 md:py-2 rounded-xl font-bold shadow active:scale-95 transition-transform flex items-center gap-1 whitespace-nowrap">
+                <i class="fas fa-download"></i> <span id="lbl-btn-banner-install">Install</span>
+            </button>
+            <button onclick="dismissInstallBanner()" class="text-gray-400 hover:text-gray-600 p-1.5 text-sm">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Floating AI Assistant Button (ဖုန်းတွင် လက်မထိလွယ်သော နေရာ) -->
+    <button id="ai-chat-btn" onclick="toggleAIChat()" class="fixed bottom-20 md:bottom-8 right-4 md:right-8 bg-gradient-to-r from-blue-600 to-indigo-600 text-white w-12 h-12 md:w-14 md:h-14 rounded-full shadow-2xl flex items-center justify-center text-xl z-[9980] hover:scale-105 active:scale-95 transition-all">
+        <i class="fas fa-robot"></i>
+    </button>
+
+    <!-- AI Chat Window -->
+    <div id="ai-chat-window" class="hidden fixed bottom-20 md:bottom-24 right-3 md:right-8 w-[94vw] sm:w-96 panel rounded-2xl shadow-2xl border border-[var(--border-color)] z-[9985] flex flex-col h-[460px] max-h-[75vh] overflow-hidden">
+        <!-- Header -->
+        <div class="p-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white flex justify-between items-center shadow">
+            <div class="flex items-center gap-2">
+                <i class="fas fa-robot text-lg"></i>
+                <div>
+                    <h4 class="font-bold text-sm">AI Shop Assistant</h4>
+                    <span class="text-[10px] opacity-80 block">စမတ် အရောင်းလက်ထောက်</span>
+                </div>
+            </div>
+            <button onclick="toggleAIChat()" class="text-white hover:opacity-80 p-1">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        
+        <!-- Messages -->
+        <div id="ai-messages" class="flex-1 p-3 overflow-y-auto space-y-2.5 text-xs">
+            <div class="bg-[var(--bg-color)] p-2.5 rounded-xl rounded-tl-none max-w-[85%] leading-relaxed border border-[var(--border-color)]">
+                မင်္ဂလာပါခင်ဗျာ! ကျွန်တော်က အားကစားဆိုင်ရဲ့ AI Assistant ဖြစ်ပါတယ်။ အရောင်းစာရင်း၊ အမြတ်ငွေ၊ ပစ္စည်းလက်ကျန် အခြေအနေတွေကို မေးမြန်းနိုင်ပါတယ်။
+            </div>
+        </div>
+
+        <!-- Quick Prompts -->
+        <div class="px-2.5 py-1.5 flex gap-1.5 overflow-x-auto no-scrollbar border-t border-[var(--border-color)] bg-opacity-30">
+            <button onclick="sendQuickPrompt('ယနေ့ အရောင်းအခြေအနေ ဘယ်လိုရှိလဲ?')" class="text-[10px] bg-primary/10 text-primary px-2.5 py-1 rounded-full whitespace-nowrap hover:bg-primary/20">📊 ယနေ့အရောင်း</button>
+            <button onclick="sendQuickPrompt('လက်ကျန်နည်းနေတဲ့ ပစ္စည်းတွေ ရှိလား?')" class="text-[10px] bg-red-500/10 text-red-500 px-2.5 py-1 rounded-full whitespace-nowrap hover:bg-red-500/20">⚠️ ပစ္စည်းပြတ်လပ်မှု</button>
+            <button onclick="sendQuickPrompt('စုစုပေါင်း အမြတ်ငွေ ဘယ်လောက်ရထားလဲ?')" class="text-[10px] bg-green-500/10 text-green-500 px-2.5 py-1 rounded-full whitespace-nowrap hover:bg-green-500/20">💰 စုစုပေါင်းအမြတ်</button>
+        </div>
+
+        <!-- Input Box -->
+        <form id="ai-chat-form" class="p-2 border-t border-[var(--border-color)] flex gap-2">
+            <input type="text" id="ai-input" placeholder="AI အား မေးမြန်းလိုသည်ကို ရိုက်ပါ..." class="input-field flex-1 px-3 py-2 rounded-xl text-xs" required autocomplete="off">
+            <button type="submit" class="btn-primary px-3.5 py-2 rounded-xl text-xs font-bold flex items-center justify-center">
+                <i class="fas fa-paper-plane"></i>
+            </button>
+        </form>
     </div>
 
     <!-- Firebase SDK & Application Logic -->
@@ -813,7 +877,7 @@
             updateCartUI();
         }
 
-        // Navigation Switcher (Desktop & Mobile Synchronized)
+        // Navigation Switcher
         window.switchTab = function(tabId) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
             const targetSection = document.getElementById(tabId + '-section');
@@ -1479,11 +1543,20 @@
             }
         };
 
-        // PWA Installation Trigger
+        // ==========================================
+        // 1. AUTO SLIDE-UP INSTALL BANNER LOGIC
+        // ==========================================
         let deferredPrompt = null;
+        const autoBanner = document.getElementById('pwa-auto-banner');
+        const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
             deferredPrompt = e;
+
+            if (!isStandalone && !sessionStorage.getItem('pwa_banner_dismissed')) {
+                if (autoBanner) autoBanner.classList.remove('hidden');
+            }
             const btn = document.getElementById('btn-pwa-install');
             if (btn) btn.classList.remove('hidden');
         });
@@ -1493,13 +1566,111 @@
                 deferredPrompt.prompt();
                 const { outcome } = await deferredPrompt.userChoice;
                 if (outcome === 'accepted') {
-                    showToast("App installed successfully!");
+                    showToast(currentLang === 'en' ? "App installed successfully!" : "App အဖြစ် သွင်းယူပြီးပါပြီ!");
+                    if (autoBanner) autoBanner.classList.add('hidden');
                 }
                 deferredPrompt = null;
             } else {
-                showToast("Chrome Menu (⋮) မှ 'Add to Home screen' သို့မဟုတ် 'Install App' ကို နှိပ်ပြီး ထည့်သွင်းနိုင်ပါသည်။");
+                showToast(currentLang === 'en' 
+                    ? "Tap Chrome Menu (⋮) > 'Install App' or 'Add to Home Screen'"
+                    : "Chrome Menu (⋮) မှ 'Install app' သို့မဟုတ် 'Add to Home screen' ကို နှိပ်ပါ");
             }
         };
+
+        window.dismissInstallBanner = function() {
+            if (autoBanner) autoBanner.classList.add('hidden');
+            sessionStorage.setItem('pwa_banner_dismissed', 'true');
+        };
+
+        window.addEventListener('appinstalled', () => {
+            if (autoBanner) autoBanner.classList.add('hidden');
+            showToast("Sports Shop App Installed!");
+        });
+
+        // ==========================================
+        // 2. AI SHOP ASSISTANT LOGIC
+        // ==========================================
+        window.toggleAIChat = function() {
+            const chatWin = document.getElementById('ai-chat-window');
+            chatWin.classList.toggle('hidden');
+            if (!chatWin.classList.contains('hidden')) {
+                document.getElementById('ai-input').focus();
+            }
+        };
+
+        window.sendQuickPrompt = function(text) {
+            document.getElementById('ai-input').value = text;
+            handleAISubmit(new Event('submit'));
+        };
+
+        const aiChatForm = document.getElementById('ai-chat-form');
+        if (aiChatForm) {
+            aiChatForm.addEventListener('submit', handleAISubmit);
+        }
+
+        async function handleAISubmit(e) {
+            if (e) e.preventDefault();
+            const inputEl = document.getElementById('ai-input');
+            const userMsg = inputEl.value.trim();
+            if (!userMsg) return;
+
+            appendAIMessage(userMsg, 'user');
+            inputEl.value = '';
+
+            const botReply = generateAIResponse(userMsg);
+            
+            setTimeout(() => {
+                appendAIMessage(botReply, 'bot');
+            }, 300);
+        }
+
+        function appendAIMessage(text, sender) {
+            const container = document.getElementById('ai-messages');
+            const div = document.createElement('div');
+            
+            if (sender === 'user') {
+                div.className = "bg-primary text-white p-2.5 rounded-xl rounded-tr-none ml-auto max-w-[85%] leading-relaxed shadow-sm";
+            } else {
+                div.className = "bg-[var(--bg-color)] p-2.5 rounded-xl rounded-tl-none max-w-[85%] leading-relaxed border border-[var(--border-color)]";
+            }
+            div.innerHTML = text.replace(/\n/g, '<br>');
+            container.appendChild(div);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function generateAIResponse(query) {
+            const q = query.toLowerCase();
+            const todayStr = new Date().toISOString().split('T')[0];
+            const todaySales = sales.filter(s => s.timestamp && s.timestamp.startsWith(todayStr));
+            const todayTotal = todaySales.reduce((sum, s) => sum + s.total, 0);
+            const todayProfit = todaySales.reduce((sum, s) => sum + (s.profit !== undefined ? s.profit : (s.total - (s.totalCost || 0))), 0);
+
+            const allTotalRevenue = sales.reduce((sum, s) => sum + s.total, 0);
+            const allTotalProfit = sales.reduce((sum, s) => sum + (s.profit !== undefined ? s.profit : (s.total - (s.totalCost || 0))), 0);
+            const lowStockItems = products.filter(p => p.stock < 5);
+
+            if (q.includes('ယနေ့') || q.includes('ဒီနေ့') || q.includes('today')) {
+                return `📊 <b>ယနေ့ အရောင်းအခြေအနေ:</b>\n• အရောင်းအကြိမ်ရေ: <b>${todaySales.length}</b> ကြိမ်\n• ရောင်းရငွေ: <b>${formatCur(todayTotal)}</b>\n• ရရှိသည့်အမြတ်: <b>${formatCur(todayProfit)}</b>`;
+            }
+
+            if (q.includes('လက်ကျန်') || q.includes('ပြတ်') || q.includes('stock') || q.includes('low')) {
+                if (lowStockItems.length === 0) {
+                    return `✅ ပစ္စည်းလက်ကျန်များ အားလုံး အခြေအနေ ကောင်းမွန်ပါသည်။ ပြတ်လပ်နေသော ပစ္စည်း မရှိသေးပါ။`;
+                }
+                const itemsList = lowStockItems.map(p => `• ${p.name} (လက်ကျန်: ${p.stock})`).slice(0, 5).join('\n');
+                return `⚠️ <b>လက်ကျန် နည်းနေသော ပစ္စည်းများ (${lowStockItems.length} မျိုး):</b>\n${itemsList}\n\n<i>ကုန်ပစ္စည်း ကြိုတင်မှာယူရန် အကြံပြုပါသည်။</i>`;
+            }
+
+            if (q.includes('အမြတ်') || q.includes('profit')) {
+                return `💰 <b>အမြတ်ငွေ စာရင်းချုပ်:</b>\n• ယနေ့အမြတ်: <b>${formatCur(todayProfit)}</b>\n• စုစုပေါင်း အသားတင်အမြတ်: <b>${formatCur(allTotalProfit)}</b>`;
+            }
+
+            if (q.includes('စုစုပေါင်း') || q.includes('all') || q.includes('total') || q.includes('အရောင်း')) {
+                return `📈 <b>ဆိုင်တစ်ခုလုံး စာရင်းချုပ်:</b>\n• ပစ္စည်းစုစုပေါင်း: <b>${products.length}</b> မျိုး\n• စုစုပေါင်း ရောင်းရငွေ: <b>${formatCur(allTotalRevenue)}</b>\n• စုစုပေါင်း အရောင်းဘောက်ချာ: <b>${sales.length}</b> စောင်`;
+            }
+
+            return `🤖 <b>ဆိုင်၏ အချက်အလက်များ မေးမြန်းနိုင်ပါသည်:</b>\n၁။ "ယနေ့ အရောင်းအခြေအနေ"\n၂။ "လက်ကျန်နည်းနေတဲ့ ပစ္စည်းများ"\n၃။ "စုစုပေါင်း အမြတ်ငွေ"\nစသည်ဖြင့် အလွယ်တကူ ရိုက်နှိပ် မေးမြန်းနိုင်ပါသည် ခင်ဗျာ။`;
+        }
 
         // Service Worker Registration
         if ('serviceWorker' in navigator) {
