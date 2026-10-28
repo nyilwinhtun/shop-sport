@@ -1,58 +1,63 @@
-const CACHE_NAME = 'sports-pos-v4';
-const ASSETS_TO_CACHE = [
+const CACHE_NAME = 'sports-pos-v5';
+const APP_SHELL = [
   './',
   './index.html',
   './manifest.json',
-  'https://cdn.tailwindcss.com',
-  'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css',
-  'https://cdn.jsdelivr.net/npm/chart.js'
+  './icons/icon-192.png',
+  './icons/icon-512.png'
 ];
 
 self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(ASSETS_TO_CACHE);
-    })
-  );
-  self.skipWaiting();
+  event.waitUntil((async () => {
+    const cache = await caches.open(CACHE_NAME);
+    // Cache only same-origin files. A single failed third-party CDN request
+    // must not prevent the Service Worker from installing.
+    await cache.addAll(APP_SHELL);
+    await self.skipWaiting();
+  })());
 });
 
 self.addEventListener('activate', (event) => {
-  event.waitUntil(
-    caches.keys().then((keys) => {
-      return Promise.all(
-        keys.map((key) => {
-          if (key !== CACHE_NAME) {
-            return caches.delete(key);
-          }
-        })
-      );
-    })
-  );
-  self.clients.claim();
+  event.waitUntil((async () => {
+    const keys = await caches.keys();
+    await Promise.all(keys
+      .filter((key) => key.startsWith('sports-pos-') && key !== CACHE_NAME)
+      .map((key) => caches.delete(key)));
+    await self.clients.claim();
+  })());
 });
 
 self.addEventListener('fetch', (event) => {
-  // Only handle GET requests and skip Firebase Auth / Firestore live streams
   if (event.request.method !== 'GET') return;
-  const url = new URL(event.request.url);
-  if (url.origin.includes('firebase') || url.origin.includes('firestore') || url.origin.includes('googleapis')) {
-    return;
-  }
+  const requestURL = new URL(event.request.url);
+  // Let Firebase and other external origins use their normal network requests.
+  if (requestURL.origin !== self.location.origin) return;
 
-  event.respondWith(
-    caches.match(event.request).then((cachedResponse) => {
-      if (cachedResponse) {
-        return cachedResponse;
-      }
-      return fetch(event.request).then((networkResponse) => {
-        return networkResponse;
-      }).catch(() => {
-        // Return index.html as fallback for SPA navigation
-        if (event.request.mode === 'navigate') {
-          return caches.match('./index.html');
+  event.respondWith((async () => {
+    const cache = await caches.open(CACHE_NAME);
+    if (event.request.mode === 'navigate') {
+      try {
+        const response = await fetch(event.request);
+        if (response && response.ok) {
+          await cache.put(event.request, response.clone());
         }
-      });
-    })
-  );
+        return response;
+      } catch (error) {
+        return (await cache.match(event.request)) ||
+          (await cache.match('./index.html')) ||
+          new Response('Offline: app page is not cached.', { status: 503, statusText: 'Service Unavailable' });
+      }
+    }
+
+    const cachedResponse = await cache.match(event.request);
+    if (cachedResponse) return cachedResponse;
+    try {
+      const response = await fetch(event.request);
+      if (response && response.ok) await cache.put(event.request, response.clone());
+      return response;
+    } catch (error) {
+      return (await cache.match(event.request)) ||
+        new Response('Offline: resource is not cached.', { status: 503, statusText: 'Service Unavailable' });
+    }
+  })());
 });
