@@ -156,7 +156,10 @@
                     <label class="block text-sm font-medium mb-1">Password</label>
                     <input type="password" id="password" required class="input-field w-full px-4 py-2.5 rounded-xl" placeholder="••••••••">
                 </div>
-                <button type="submit" class="btn-primary w-full py-3 rounded-xl font-medium shadow-md mt-2">Login</button>
+                <button type="submit" id="btn-login-submit" class="btn-primary w-full py-3 rounded-xl font-medium shadow-md mt-2 flex items-center justify-center gap-2">
+                    <span id="login-spinner" class="hidden"><i class="fas fa-spinner fa-spin"></i></span>
+                    <span id="login-btn-text">Login</span>
+                </button>
                 <div class="text-center mt-3">
                     <p class="text-sm opacity-70">New here? <a href="#" id="show-register" class="text-primary font-medium hover:underline">Create Account</a></p>
                 </div>
@@ -171,7 +174,10 @@
                     <label class="block text-sm font-medium mb-1">Password</label>
                     <input type="password" id="reg-password" required class="input-field w-full px-4 py-2.5 rounded-xl" placeholder="••••••••">
                 </div>
-                <button type="submit" class="btn-primary w-full py-3 rounded-xl font-medium shadow-md mt-2">Register</button>
+                <button type="submit" id="btn-reg-submit" class="btn-primary w-full py-3 rounded-xl font-medium shadow-md mt-2 flex items-center justify-center gap-2">
+                    <span id="reg-spinner" class="hidden"><i class="fas fa-spinner fa-spin"></i></span>
+                    <span id="reg-btn-text">Register</span>
+                </button>
                 <div class="text-center mt-3">
                     <p class="text-sm opacity-70">Already have account? <a href="#" id="show-login" class="text-primary font-medium hover:underline">Login</a></p>
                 </div>
@@ -577,7 +583,7 @@
         </div>
     </div>
 
-    <!-- Auto Slide-up Install Banner (ဖုန်းထဲ App သွင်းရန် အလိုအလျောက် ပေါ်မည့် Banner) -->
+    <!-- Auto Slide-up Install Banner (Login ဝင်ပြီးမှ ပေါ်မည့် Banner) -->
     <div id="pwa-auto-banner" class="hidden fixed bottom-20 md:bottom-6 left-3 right-3 md:left-auto md:right-6 md:w-96 panel p-3.5 md:p-4 rounded-2xl shadow-2xl border-2 border-primary z-[9990] flex items-center justify-between gap-3">
         <div class="flex items-center gap-3">
             <div class="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-primary flex items-center justify-center text-white text-lg md:text-xl shadow flex-shrink-0">
@@ -646,7 +652,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, onSnapshot, collection, addDoc, enableIndexedDbPersistence } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, onSnapshot, collection, addDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDcJCZkUdm6A8mEZpCJxnTUDW-l5MUj-Ao",
@@ -661,11 +667,6 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-
-        // Offline Data Support
-        enableIndexedDbPersistence(db).catch(err => {
-            console.warn("Persistence error:", err.code);
-        });
 
         // App States
         let currentUser = null;
@@ -750,7 +751,7 @@
             signOut(auth);
         };
 
-        // Authentication Handlers
+        // Authentication Handlers with Visual Feedback
         document.getElementById('show-register').addEventListener('click', (e) => {
             e.preventDefault();
             document.getElementById('login-form').classList.add('hidden');
@@ -765,26 +766,52 @@
 
         document.getElementById('login-form').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const email = document.getElementById('email').value;
+            const email = document.getElementById('email').value.trim();
             const password = document.getElementById('password').value;
+            const btn = document.getElementById('btn-login-submit');
+            const spinner = document.getElementById('login-spinner');
+            const text = document.getElementById('login-btn-text');
+
+            btn.disabled = true;
+            spinner.classList.remove('hidden');
+            text.textContent = "Logging in...";
+
             try {
                 await signInWithEmailAndPassword(auth, email, password);
                 showToast("Logged in successfully!");
             } catch (error) {
+                console.error("Login Error:", error);
                 showToast("Login failed: " + error.message);
+            } finally {
+                btn.disabled = false;
+                spinner.classList.add('hidden');
+                text.textContent = "Login";
             }
         });
 
         document.getElementById('register-form').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const email = document.getElementById('reg-email').value;
+            const email = document.getElementById('reg-email').value.trim();
             const password = document.getElementById('reg-password').value;
+            const btn = document.getElementById('btn-reg-submit');
+            const spinner = document.getElementById('reg-spinner');
+            const text = document.getElementById('reg-btn-text');
+
+            btn.disabled = true;
+            spinner.classList.remove('hidden');
+            text.textContent = "Registering...";
+
             try {
                 const userCred = await createUserWithEmailAndPassword(auth, email, password);
-                await setDoc(doc(db, 'users', userCred.user.uid), { email: email, role: 'admin' });
+                await setDoc(doc(db, 'users', userCred.user.uid), { email: email, role: 'admin' }, { merge: true });
                 showToast("Account created & logged in!");
             } catch (error) {
+                console.error("Register Error:", error);
                 showToast("Registration failed: " + error.message);
+            } finally {
+                btn.disabled = false;
+                spinner.classList.add('hidden');
+                text.textContent = "Register";
             }
         });
 
@@ -808,11 +835,16 @@
                 loadData();
                 loadLocalTheme();
                 applyTranslation();
+                
+                // Login ဝင်ပြီးမှသာ PWA Install Banner ကို စစ်ဆေးဖော်ပြပေးမည်
+                checkAndShowBanner();
             } else {
                 currentUser = null;
                 loginView.classList.remove('hidden');
                 appView.classList.add('hidden');
                 clearData();
+                // Logout လုပ်ပါက Install Banner ကို ဝှက်ထားမည်
+                if (autoBanner) autoBanner.classList.add('hidden');
             }
         });
 
@@ -1533,34 +1565,27 @@
         };
 
         // ==========================================
-        // 1. AUTO SLIDE-UP INSTALL BANNER (GUARANTEED VISIBILITY)
+        // 1. PWA AUTO SLIDE-UP INSTALL BANNER (ROBUST)
         // ==========================================
         let deferredPrompt = null;
         const autoBanner = document.getElementById('pwa-auto-banner');
         
-        // ဖုန်းထဲတွင် သွင်းထားပြီးသား ဟုတ်မဟုတ် စစ်ဆေးခြင်း
+        // ဖုန်းထဲတွင် App အဖြစ် သွင်းထားပြီးသား ဟုတ်မဟုတ် စစ်ဆေးခြင်း
         const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
 
-        // ဖုန်းထဲတွင် မသွင်းရသေးပါက Banner ကို အစကတည်းက အလိုအလျောက် ပေါ်နေစေမည်
         function checkAndShowBanner() {
-            if (!isStandalone && !sessionStorage.getItem('pwa_banner_dismissed')) {
+            // Login ဝင်ထားပြီး ဖုန်းထဲမသွင်းရသေးပါက Banner ကို အလိုအလျောက် ပြသမည်
+            if (currentUser && !isStandalone && !sessionStorage.getItem('pwa_banner_dismissed')) {
                 if (autoBanner) autoBanner.classList.remove('hidden');
             }
         }
 
-        // Chrome မှ Native Install Event ရရှိလျှင် သိမ်းဆည်းထားမည်
+        // Chrome မှ Native Install Event ကို ဖမ်းယူမှတ်သားထားခြင်း
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
             deferredPrompt = e;
             checkAndShowBanner();
         });
-
-        // စာမျက်နှာ စဖွင့်ဖွင့်ချင်း ၁ စက္ကန့်အကြာတွင် Banner ကို အလိုအလျောက် ပေါ်စေမည်
-        setTimeout(checkAndShowBanner, 1000);
-
-        // စာမျက်နှာကို လက်နှင့် စတင်ထိတွေ့သည့်အခါတွင်လည်း Banner ကို အလိုအလျောက် ဖော်ပေးမည်
-        window.addEventListener('touchstart', checkAndShowBanner, { once: true });
-        window.addEventListener('click', checkAndShowBanner, { once: true });
 
         // Install ခလုတ် နှိပ်လိုက်သည်နှင့် ဖုန်း၏ Native System Install Dialog ကို တိုက်ရိုက် ခေါ်ယူခြင်း
         window.triggerPWAInstall = async function() {
